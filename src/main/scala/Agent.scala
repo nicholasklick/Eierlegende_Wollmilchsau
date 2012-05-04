@@ -1,10 +1,11 @@
+import akka.actor.{ActorSystem, ActorRef}
+import akka.dispatch.{ExecutionContext, Future, Await}
 import akka.transactor._
 import scala.concurrent.stm._
-import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
-import akka.dispatch.Await
+
 
 abstract class Agent(val world:World) extends Transactor {
 	val x = Ref(world.width * scala.math.random)
@@ -19,8 +20,9 @@ abstract class Agent(val world:World) extends Transactor {
 	}
 	
 	def doTick() = {
-	  //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here!")
-	  atomic { implicit txn =>
+    //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here!")
+    //println("In doTick... " + otherAgentsInVicinity(2).length + " little buddies are NEAR here!")
+    atomic { implicit txn =>
 	    tick()
 	  }
 	  world.manager ! TickComplete
@@ -44,16 +46,26 @@ abstract class Agent(val world:World) extends Transactor {
 	  }
 	}
 	
-//	def otherAgentsInVicinity(radius:Int):List[ActorRef] = {
-//	  atomic{
-//		  val patches = world.patchesWithinRange(x.get(), x.get(y), radius)
-//		  val agents = patches.map(p.  )
-//	}
-//	 
+	def getOtherAgentsInVicinity(radius:Int):List[ActorRef] = {
+    //implicit val context = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
+    //implicit val actorSystem = ActorSystem("MySystem")
+    implicit val actorSystem = context.system
+    implicit def agentsForPatch2ListOfActorRefs(afp:AgentsForPatch): List[ActorRef] = afp.agentRefs
+	  atomic{
+      implicit txn => {
+        val patches = world.patchesWithinRange(x(), y(), radius)
+        val agentRefsFutures = patches.map( (patchRef) => patchRef ? FetchAgentRefs )
+        val futureFold = Future.fold(agentRefsFutures)(List[ActorRef]())(_.asInstanceOf[List[ActorRef]] ::: _.asInstanceOf[AgentsForPatch])
+        Await.result(futureFold.asInstanceOf[akka.dispatch.Await.Awaitable[List[ActorRef]]], 1 seconds)
+      }
+    }
+	}
+	 
 	def getAgentsOnMyPatch() = {
 	  getAgentsForPatchRef(currentPatch)
 	}
-	def getAgentsForPatchRef(patchRef:ActorRef):scala.collection.immutable.Vector[ActorRef] = {
+	
+	def getAgentsForPatchRef(patchRef:ActorRef):List[ActorRef] = {
 //	  (patchRef ? FetchAgentRefs).as[AgentsForPatch] match{
 	  val future = patchRef ? FetchAgentRefs
 	  val result = Await.result(future, 1 second)
@@ -62,7 +74,9 @@ abstract class Agent(val world:World) extends Transactor {
 	      agentRefs
 	    case None => 
 	      println("Didn't get any agents back, making an empty list")
-	      scala.collection.immutable.Vector[ActorRef]()
+	      List[ActorRef]()
 	  }
 	}
+
+
 }

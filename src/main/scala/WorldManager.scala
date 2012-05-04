@@ -5,15 +5,13 @@ import akka.actor._
 class WorldManager(val world:World) extends Actor {
 	private val system = ActorSystem("MySystem")
 
-  	private val agentCount = world.width * world.height / 2
+  private val agentCount = world.width * world.height / 2
 	private val critters = Array.tabulate(agentCount){ (i) => system.actorOf(Props(new SpacerAgent(world)))}
-  	private val agentsComplete = Ref(0)
+  private val agentsComplete = Ref(0)
   	
-  	val readyForNewTick = Ref(true)
+  val readyForNewTick = Ref(true)
 
-	println("World manager ready!")
-
-  	var startTime = System.nanoTime()
+  var startTime = System.nanoTime()
   	  	
 	def tick() = {
 		atomic { 

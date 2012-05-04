@@ -1,12 +1,11 @@
 import akka.transactor._
 import scala.concurrent.stm._
 import akka.actor._
+import scala.collection.immutable.Vector
 
 class Patch(val world:World, val x:Int, val y:Int) extends Transactor {
-	val agentRefs = Ref(scala.collection.immutable.Vector[ActorRef]())
-	
-	//println("Patch spawning!")
-	
+	val agentRefs = Ref(Vector[ActorRef]())
+		
 	def agentEntered(agentRef:ActorRef) {
 	  atomic{ 
 	    implicit txn => agentRefs.set(agentRefs.get :+ agentRef)
@@ -32,10 +31,9 @@ class Patch(val world:World, val x:Int, val y:Int) extends Transactor {
 	
 	override def normally = {
 	  case FetchAgentRefs =>
-	    //println("Yay, got a FetchAgentRefs!")
 	    atomic{
 	      implicit txn => {
-		      sender ! AgentsForPatch(agentRefs.get)
+		      sender ! AgentsForPatch(agentRefs.get.toList)
 	      }
 	    }
 	}

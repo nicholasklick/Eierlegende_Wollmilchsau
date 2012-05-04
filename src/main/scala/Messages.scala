@@ -6,10 +6,10 @@ case class AgentLeft(val agent:ActorRef)
 
 case class AgentEntered(val agent:ActorRef)
 
-case class Tick()
+case object Tick
 
-case class TickComplete()
+case object TickComplete
 
-case class FetchAgentRefs()
+case object FetchAgentRefs
 
-case class AgentsForPatch(val agentRefs:scala.collection.immutable.Vector[ActorRef])
+case class AgentsForPatch(val agentRefs:List[ActorRef])
