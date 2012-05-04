@@ -20,8 +20,8 @@ abstract class Agent(val world:World) extends Transactor {
 	}
 	
 	def doTick() = {
-    //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here!")
-    //println("In doTick... " + otherAgentsInVicinity(2).length + " little buddies are NEAR here!")
+    //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here! " + getOtherAgentsInVicinity(2).length + " NEAR here!")
+    //println("In doTick... " + getOtherAgentsInVicinity(2).length + " little buddies are NEAR here!")
     atomic { implicit txn =>
 	    tick()
 	  }
@@ -41,26 +41,28 @@ abstract class Agent(val world:World) extends Transactor {
 	}
 	
 	def findCurrentPatch():ActorRef = {
-	  atomic {
-	    implicit txn => world.patchAt(x.get, y.get)
-	  }
+	  world.patchAt(x.single(), y.single())
 	}
-	
-	def getOtherAgentsInVicinity(radius:Int):List[ActorRef] = {
+
+  // This doesn't work, even though it should. Everything just starts timing out... not sure why. I'm guessing the Await.result blocking doesn't release control of the thread
+	def getOtherAgentsInVicinityParallel(radius:Int):List[ActorRef] = {
     //implicit val context = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
     //implicit val actorSystem = ActorSystem("MySystem")
     implicit val actorSystem = context.system
     implicit def agentsForPatch2ListOfActorRefs(afp:AgentsForPatch): List[ActorRef] = afp.agentRefs
-	  atomic{
-      implicit txn => {
-        val patches = world.patchesWithinRange(x(), y(), radius)
-        val agentRefsFutures = patches.map( (patchRef) => patchRef ? FetchAgentRefs )
-        val futureFold = Future.fold(agentRefsFutures)(List[ActorRef]())(_.asInstanceOf[List[ActorRef]] ::: _.asInstanceOf[AgentsForPatch])
-        Await.result(futureFold.asInstanceOf[akka.dispatch.Await.Awaitable[List[ActorRef]]], 1 seconds)
-      }
-    }
+
+    val patches = world.patchesWithinRange(x.single(), y.single(), radius)
+    val agentRefsFutures = patches.map( (patchRef) => patchRef ? FetchAgentRefs )
+    val futureFold = Future.fold(agentRefsFutures)(List[ActorRef]())(_.asInstanceOf[List[ActorRef]] ::: _.asInstanceOf[AgentsForPatch])
+    Await.result(futureFold.asInstanceOf[akka.dispatch.Await.Awaitable[List[ActorRef]]], 1 seconds)
 	}
-	 
+
+  def getOtherAgentsInVicinity(radius:Int):List[ActorRef] = {
+    val patches = world.patchesWithinRange(x.single(), y.single(), radius)
+
+    patches.foldLeft(List[ActorRef]())( (l, r) => getAgentsForPatchRef(r) ::: l )
+  }
+
 	def getAgentsOnMyPatch() = {
 	  getAgentsForPatchRef(currentPatch)
 	}

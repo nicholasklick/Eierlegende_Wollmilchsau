@@ -9,7 +9,7 @@ object Driver {
   	def main(arts: Array[String]): Unit = {
 	  val system = ActorSystem("DriverSystem")
 	  println("Spawning world...")
-	  val world = new World(50,50)
+	  val world = new World(100,100)
 	  println("...done")
 	  system.scheduler.schedule(50 milliseconds, 100 milliseconds, world.manager, Tick)
 	  //OldScheduler.schedule(world.manager, Tick, 0, 50, java.util.concurrent.)
