@@ -32,6 +32,10 @@ abstract class Agent(val world:World) extends Transactor {
 	def tick();
 	
 	override def atomically = implicit txn => {
+    case message =>
+  }
+
+  override def normally =  {
 	  case Tick =>
 	    doTick()
 	}
@@ -45,7 +49,8 @@ abstract class Agent(val world:World) extends Transactor {
 	}
 
   // This doesn't work, even though it should. Everything just starts timing out... not sure why. I'm guessing the Await.result blocking doesn't release control of the thread
-	def getOtherAgentsInVicinityParallel(radius:Int):List[ActorRef] = {
+	/*
+  def getOtherAgentsInVicinityParallel(radius:Int):List[ActorRef] = {
     //implicit val context = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
     //implicit val actorSystem = ActorSystem("MySystem")
     implicit val actorSystem = context.system
@@ -56,6 +61,7 @@ abstract class Agent(val world:World) extends Transactor {
     val futureFold = Future.fold(agentRefsFutures)(List[ActorRef]())(_.asInstanceOf[List[ActorRef]] ::: _.asInstanceOf[AgentsForPatch])
     Await.result(futureFold.asInstanceOf[akka.dispatch.Await.Awaitable[List[ActorRef]]], 1 seconds)
 	}
+	*/
 
   def getOtherAgentsInVicinity(radius:Int):List[ActorRef] = {
     val patches = world.patchesWithinRange(x.single(), y.single(), radius)

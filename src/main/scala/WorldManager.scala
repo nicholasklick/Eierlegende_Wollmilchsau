@@ -5,42 +5,39 @@ import akka.actor._
 class WorldManager(val world:World) extends Actor {
 	private val system = ActorSystem("MySystem")
 
-  private val agentCount = world.width * world.height / 2
-	private val critters = Array.tabulate(agentCount){ (i) => system.actorOf(Props(new SpacerAgent(world)))}
-  private val agentsComplete = Ref(0)
+  private var critters = Vector[ActorRef]()
+	//private var critters = Array.tabulate(agentCount){ (i) => system.actorOf(Props(new SpacerAgent(world)))}
+  private var agentCount = 0 //how many agents we ticked in this pass. We need to keep track of this because new guys might get added mid-tick and we'd wait forever for them
+  private var agentsComplete = 0
   	
-  val readyForNewTick = Ref(true)
+  private var readyForNewTick = true
 
   var startTime = System.nanoTime()
   	  	
 	def tick() = {
-		atomic { 
-		  implicit txn =>{
-			//println("in tick atomic section")
-			if (readyForNewTick.get) {
-				readyForNewTick.set(false)
-		  	    startTime = System.nanoTime()
-		  	    agentsComplete.set(0)
-		  	    critters.foreach( agent => agent ! Tick )
-			}
-		  }
-		}
+      if (readyForNewTick && critters.length > 0) {
+        readyForNewTick = false
+        startTime = System.nanoTime()
+        agentsComplete = 0
+        agentCount = critters.length
+        critters.foreach( agent => agent ! Tick )
+      }
 	}
   	
   	def receive = {
-  	  case TickComplete => 
-  	    atomic{ 
-  	      implicit txn => {
-  	        val complete = agentsComplete.get + 1
-  	    	agentsComplete.set(complete)
-  	    	if (complete >= agentCount ){
-	    	  val endTime = System.nanoTime()
-	    	  val elapsedTime = endTime - startTime
-	    	  println("Tick timer: " + elapsedTime / 1000000000.0)
-	    	  readyForNewTick.set(true)
-  	    	}
-  	      }
-  	    }
+      case AddAgent(agent) => {
+        critters = critters :+ agent
+      }
+
+  	  case TickComplete => {
+          agentsComplete += 1
+          if (agentsComplete >= agentCount ){
+            val endTime = System.nanoTime()
+            val elapsedTime = endTime - startTime
+            println("Tick timer: " + elapsedTime / 1E9 + " seconds \t\t" + agentCount + " agents")
+            readyForNewTick = true
+          }
+      }
   	  case Tick =>
   	    tick()
   	}
