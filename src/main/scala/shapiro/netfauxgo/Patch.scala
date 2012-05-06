@@ -4,7 +4,6 @@ import akka.transactor._
 import scala.concurrent.stm._
 import akka.actor._
 import scala.collection.immutable.Vector
-import shapiro.netfauxgo.World
 
 class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
   val agentRefs = Ref(Vector[ActorRef]())

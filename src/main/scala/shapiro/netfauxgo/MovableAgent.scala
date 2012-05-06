@@ -1,7 +1,6 @@
 package shapiro.netfauxgo
 
 import scala.concurrent.stm._
-import shapiro.netfauxgo.World
 
 abstract class MovableAgent(world: World) extends Agent(world) {
 

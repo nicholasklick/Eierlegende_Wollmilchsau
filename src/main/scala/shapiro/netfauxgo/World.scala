@@ -1,6 +1,5 @@
 package shapiro.netfauxgo
 
-import shapiro.netfauxgo.WorldManager
 import akka.actor._
 
 

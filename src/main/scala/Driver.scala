@@ -1,11 +1,9 @@
-package shapiro.netfauxgo
-
 import akka.actor._
 import akka.actor.Props
 import akka.util.duration._
 import akka.actor.Scheduler
 import akka.actor.ActorSystem
-
+import shapiro.netfauxgo._
 
 object Driver {
   val system = ActorSystem("DriverSystem")

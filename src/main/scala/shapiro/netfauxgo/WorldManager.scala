@@ -8,7 +8,6 @@ class WorldManager(val world: World) extends Actor {
   private val system = ActorSystem("MySystem")
 
   private var critters = Vector[ActorRef]()
-  //private var critters = Array.tabulate(agentCount){ (i) => system.actorOf(Props(new SpacerAgent(world)))}
   private var agentCount = 0
   //how many agents we ticked in this pass. We need to keep track of this because new guys might get added mid-tick and we'd wait forever for them
   private var agentsComplete = 0
