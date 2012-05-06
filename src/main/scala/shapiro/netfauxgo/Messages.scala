@@ -1,3 +1,5 @@
+package shapiro.netfauxgo
+
 import akka.actor.ActorRef
 
 case class AddAgent(val agent:ActorRef)
@@ -15,3 +17,4 @@ case object TickComplete
 case object FetchAgentRefs
 
 case class AgentsForPatch(val agentRefs:List[ActorRef])
+
