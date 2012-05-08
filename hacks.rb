@@ -1,5 +1,7 @@
 require 'java'
 java_import 'akka.actor.Props'
+java_import 'shapiro.netfauxgo.MovableAgent'
+
 
 class Props
   def self.[](*args, &block)
@@ -13,5 +15,11 @@ class Props
 
   class << self
     alias_method :create, :[]
+  end
+end
+
+class MovableAgent
+  def self.create(*args)
+    self.new(*args)
   end
 end
