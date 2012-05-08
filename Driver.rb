@@ -4,7 +4,6 @@ require 'hacks'
 java_import 'akka.actor.ActorSystem'
 java_import 'shapiro.netfauxgo.SpacerAgent'
 java_import 'shapiro.netfauxgo.AddAgent'
-java_import 'shapiro.netfauxgo.MovableAgent'
 
 java_import 'Driver'   #this will spawn a world
 world = Driver.world
@@ -17,8 +16,18 @@ class Circler < MovableAgent
   end
 end
 
+class Spacer < MovableAgent
+  def tick
+    wiggle if get_other_agents_in_vicinity(1).length > 1
+  end
+  
+  def wiggle
+    forward 1
+    turn_left 1
+  end
+end
+
 (world.width * world.height / 2).times do
-  circler_props = Props.create { Circler.new world }
-  circler_actor = actor_system.actor_of(circler_props)
+  circler_actor = actor_system.actor_of(Props.create { Spacer.new world })
   world.manager.tell AddAgent.new circler_actor
 end
