@@ -19,13 +19,10 @@ end
 class Spacer < MovableAgent
   def initialize(*args)
     super
-    self.counter = 0
   end
   
   def tick
     wiggle if get_other_agents_in_vicinity(1).length > 1
-    self.counter += 1
-    #puts self.counter
   end
   
   def wiggle
