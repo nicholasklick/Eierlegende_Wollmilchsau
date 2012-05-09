@@ -7,6 +7,7 @@ import scala.concurrent.stm._
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
+import scala.collection.immutable.Map
 
 
 abstract class Agent(val world: World) extends Transactor {
@@ -14,6 +15,7 @@ abstract class Agent(val world: World) extends Transactor {
   val y = Ref(world.height * scala.math.random)
   implicit val timeout = Timeout(1 seconds) // needed for `?` below
 
+  val junkRef = Ref(Map[Any,Any]())
 
   var currentPatch = findCurrentPatch()
 
@@ -50,6 +52,14 @@ abstract class Agent(val world: World) extends Transactor {
 
   def findCurrentPatch(): ActorRef = {
     world.patchAt(x.single(), y.single())
+  }
+
+  def getJunk(key:Any): Any = {
+    junkRef.single().get(key).get
+  }
+
+  def setJunk(key:Any, value:Any): Unit = {
+    junkRef.single() = junkRef.single() + (key -> value)
   }
 
   // This doesn't work, even though it should. Everything just starts timing out... not sure why. I'm guessing the Await.result blocking doesn't release control of the thread

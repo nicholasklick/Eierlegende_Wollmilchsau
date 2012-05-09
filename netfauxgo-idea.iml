@@ -15,8 +15,8 @@
     </content>
     <orderEntry type="jdk" jdkName="1.6" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="scala-library" level="project" />
-    <orderEntry type="library" name="akka basics" level="project" />
+    <orderEntry type="library" exported="" name="scala-library" level="project" />
+    <orderEntry type="library" exported="" name="akka basics" level="project" />
   </component>
 </module>
 

@@ -1,6 +1,6 @@
 require 'java'
 java_import 'akka.actor.Props'
-java_import 'shapiro.netfauxgo.MovableAgent'
+java_import 'shapiro.netfauxgo.Agent'
 
 
 class Props
@@ -18,8 +18,24 @@ class Props
   end
 end
 
-class MovableAgent
-  def self.create(*args)
-    self.new(*args)
+module JunkStorage
+  def method_missing(name, *args)
+    name_string = name.to_s
+    if name_string.end_with? "="
+      if args.length == 1
+        self.set_junk(name_string.slice(0, name_string.length - 1), args.first)
+      else raise "Value to set missing"
+      end
+    else
+      self.get_junk(name_string)
+    end
   end
+end
+
+class Agent
+  include JunkStorage
+end
+
+class Patch
+  include JunkStorage
 end

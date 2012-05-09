@@ -4,9 +4,21 @@ import akka.transactor._
 import scala.concurrent.stm._
 import akka.actor._
 import scala.collection.immutable.Vector
+import scala.collection.immutable.Map
+
 
 class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
   val agentRefs = Ref(Vector[ActorRef]())
+  val junkRef = Ref(Map[Any,Any]())
+
+
+  def getJunk(key:Any): Any = {
+    junkRef.single().get(key).get
+  }
+
+  def setJunk(key:Any, value:Any): Unit = {
+    junkRef.single() = junkRef.single() + (key -> value)
+  }
 
   def agentEntered(agentRef: ActorRef) {
     atomic {

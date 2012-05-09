@@ -2,8 +2,8 @@ require 'java'
 
 require 'hacks'
 java_import 'akka.actor.ActorSystem'
-java_import 'shapiro.netfauxgo.SpacerAgent'
 java_import 'shapiro.netfauxgo.AddAgent'
+java_import 'shapiro.netfauxgo.MovableAgent'
 
 java_import 'Driver'   #this will spawn a world
 world = Driver.world
@@ -17,8 +17,15 @@ class Circler < MovableAgent
 end
 
 class Spacer < MovableAgent
+  def initialize(*args)
+    super
+    self.counter = 0
+  end
+  
   def tick
     wiggle if get_other_agents_in_vicinity(1).length > 1
+    self.counter += 1
+    #puts self.counter
   end
   
   def wiggle
