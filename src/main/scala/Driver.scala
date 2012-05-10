@@ -15,8 +15,10 @@ object Driver {
 
 
   def main(arts: Array[String]): Unit = {
-    for (i <- 0 until world.width * world.height / 2)
-      world.manager ! AddAgent(system.actorOf(Props(new MurderousSpacerAgent(world))))
+    for (i <- 0 until world.width * world.height / 2) {
+      val dude = system.actorOf(Props(new MurderousSpacerAgent(world)).withDispatcher("kill-prioritizer"))
+      world.manager ! AddAgent(dude)
+    }
   }
 
 }
