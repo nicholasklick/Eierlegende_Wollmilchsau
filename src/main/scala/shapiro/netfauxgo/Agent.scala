@@ -57,7 +57,7 @@ abstract class Agent(val world: World) extends Actor {
   }
 
   def getJunk(key:Any): Any = {
-    junkRef.single().get(key).get
+    junkRef.single().get(key)
   }
 
   def setJunk(key:Any, value:Any): Unit = {

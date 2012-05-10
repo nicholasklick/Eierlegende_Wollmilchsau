@@ -27,7 +27,7 @@ module JunkStorage
       else raise "Value to set missing"
       end
     else
-      self.get_junk(name_string)
+      self.get_junk(name_string).get
     end
   end
 end
