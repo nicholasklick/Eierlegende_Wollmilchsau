@@ -2,6 +2,10 @@ package shapiro.netfauxgo
 
 import akka.actor.ActorRef
 
+case object Die
+
+case class KillAgent(val agent:ActorRef)
+
 case class AddAgent(val agent:ActorRef)
 
 case class MovePatches(val agent:ActorRef, val from:ActorRef, val to:ActorRef)

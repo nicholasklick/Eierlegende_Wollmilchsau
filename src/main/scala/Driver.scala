@@ -16,7 +16,7 @@ object Driver {
 
   def main(arts: Array[String]): Unit = {
     for (i <- 0 until world.width * world.height / 2)
-      world.manager ! AddAgent(system.actorOf(Props(new SpacerAgent(world))))
+      world.manager ! AddAgent(system.actorOf(Props(new MurderousSpacerAgent(world))))
   }
 
 }

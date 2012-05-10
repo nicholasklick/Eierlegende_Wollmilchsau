@@ -1,6 +1,6 @@
 package shapiro.netfauxgo
 
-import akka.actor.{ActorSystem, ActorRef}
+import akka.actor.{ActorSystem, ActorRef, Actor}
 import akka.dispatch.{ExecutionContext, Future, Await}
 import akka.transactor._
 import scala.concurrent.stm._
@@ -10,26 +10,23 @@ import akka.util.duration._
 import scala.collection.immutable.Map
 
 
-abstract class Agent(val world: World) extends Transactor {
+abstract class Agent(val world: World) extends Actor {
   val x = Ref(world.width * scala.math.random)
   val y = Ref(world.height * scala.math.random)
   implicit val timeout = Timeout(1 seconds) // needed for `?` below
 
   val junkRef = Ref(Map[Any,Any]())
 
-  var currentPatch = findCurrentPatch()
+  val deadRef = Ref(false)
 
-  atomic {
-    implicit txn =>
-      notifyPatchThatWeHaveStarted(currentPatch)
-  }
+  notifyPatchThatWeHaveStarted(currentPatch())
 
   def doTick() = {
     //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here! " + getOtherAgentsInVicinity(2).length + " NEAR here!")
     //println("In doTick... " + getOtherAgentsInVicinity(2).length + " little buddies are NEAR here!")
     atomic {
       implicit txn =>
-        tick()
+        if (!deadRef.get) tick()
     }
     world.manager ! TickComplete
     //println("tick complete in doTick")
@@ -37,20 +34,25 @@ abstract class Agent(val world: World) extends Transactor {
 
   def tick();
 
-  override def atomically = implicit txn => {
-    case message =>
-  }
-
-  override def normally = {
+  override def receive = {
     case Tick =>
       doTick()
+    case coordinated @ Coordinated(Die) => die()
+  }
+
+  def die() =  atomic {
+    implicit txn => if (deadRef.get){
+      throw AlreadyDeadException
+    } else {
+      deadRef.set(true)
+    }
   }
 
   def notifyPatchThatWeHaveStarted(patchRef: ActorRef) = {
     patchRef ! AgentEntered(self)
   }
 
-  def findCurrentPatch(): ActorRef = {
+  def currentPatch(): ActorRef = {
     world.patchAt(x.single(), y.single())
   }
 
@@ -62,29 +64,15 @@ abstract class Agent(val world: World) extends Transactor {
     junkRef.single() = junkRef.single() + (key -> value)
   }
 
-  // This doesn't work, even though it should. Everything just starts timing out... not sure why. I'm guessing the Await.result blocking doesn't release control of the thread
-  /*
-  def getOtherAgentsInVicinityParallel(radius:Int):List[ActorRef] = {
-    //implicit val context = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(2))
-    //implicit val actorSystem = ActorSystem("MySystem")
-    implicit val actorSystem = context.system
-    implicit def agentsForPatch2ListOfActorRefs(afp:AgentsForPatch): List[ActorRef] = afp.agentRefs
-
-    val patches = world.patchesWithinRange(x.single(), y.single(), radius)
-    val agentRefsFutures = patches.map( (patchRef) => patchRef ? FetchAgentRefs )
-    val futureFold = Future.fold(agentRefsFutures)(List[ActorRef]())(_.asInstanceOf[List[ActorRef]] ::: _.asInstanceOf[AgentsForPatch])
-    Await.result(futureFold.asInstanceOf[akka.dispatch.Await.Awaitable[List[ActorRef]]], 1 seconds)
-  }
-  */
-
   def getOtherAgentsInVicinity(radius: Int): List[ActorRef] = {
     val patches = world.patchesWithinRange(x.single(), y.single(), radius)
 
-    patches.foldLeft(List[ActorRef]())((l, r) => getAgentsForPatchRef(r) ::: l)
+    val everyone = patches.foldLeft(List[ActorRef]())((l, r) => getAgentsForPatchRef(r) ::: l)
+    everyone.filter( a => a != self)
   }
 
   def getAgentsOnMyPatch() = {
-    getAgentsForPatchRef(currentPatch)
+    getAgentsForPatchRef(currentPatch())
   }
 
   def getAgentsForPatchRef(patchRef: ActorRef): List[ActorRef] = {
@@ -100,5 +88,14 @@ abstract class Agent(val world: World) extends Transactor {
     }
   }
 
-
+  def killAgent(agentRef: ActorRef) = {
+    val didKill = Ref(false)
+    val coordinated = Coordinated()
+    coordinated atomic { implicit t =>
+      didKill.set(true)
+      agentRef ! coordinated(Die)
+      world.manager ! coordinated(KillAgent(agentRef))
+    }
+    didKill.single()
+  }
 }

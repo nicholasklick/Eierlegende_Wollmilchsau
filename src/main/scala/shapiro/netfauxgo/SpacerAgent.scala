@@ -1,11 +1,11 @@
 package shapiro.netfauxgo
 
-class SpacerAgent(world: World) extends MovableAgent(world) {
+class MurderousSpacerAgent(world: World) extends MovableAgent(world) {
 
   def tick() = {
-    if (getOtherAgentsInVicinity(1).length > 1) {
-      forward(1)
-      turn_left(1)
+    val otherGuys = getOtherAgentsInVicinity(1)
+    if (otherGuys.length > 1) {
+      otherGuys.foreach( og => killAgent(og) )
     }
   }
 }

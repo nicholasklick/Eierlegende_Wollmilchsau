@@ -14,9 +14,20 @@ class WorldManager(val world: World) extends Actor {
 
   private var readyForNewTick = true
 
+  private var deadPool = Ref(Vector[ActorRef]()) // these guys have been killed this tick, and should be removed from the database and the list of critters to tick
+
   var startTime = System.nanoTime()
 
   def tick() = {
+    val pool = deadPool.single()
+    if (pool.length > 0){
+      pool.foreach( c => c ! PoisonPill)
+      critters = critters.filter(c => !pool.contains(c))
+      ///// FIXME /////
+      /// add code to remove from database here ///
+      //// FIXME /////
+      deadPool.single()=Vector[ActorRef]()
+    }
     if (readyForNewTick && critters.length > 0) {
       readyForNewTick = false
       startTime = System.nanoTime()
@@ -42,6 +53,10 @@ class WorldManager(val world: World) extends Actor {
     }
     case Tick =>
       tick()
+
+    case coordinated @ Coordinated(KillAgent(agentRef)) => {
+      coordinated atomic  { implicit t => deadPool.set(deadPool.get :+ agentRef) }
+    }
   }
 
 
