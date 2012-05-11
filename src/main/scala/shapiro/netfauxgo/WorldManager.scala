@@ -54,8 +54,8 @@ class WorldManager(val world: World) extends Actor {
     case Tick =>
       tick()
 
-    case coordinated @ Coordinated(KillAgent(agentRef)) => {
-      coordinated atomic  { implicit t => deadPool.set(deadPool.get :+ agentRef) }
+    case KillAgent(agentRef) => {
+      atomic  { implicit t => deadPool.set(deadPool.get :+ agentRef) }
     }
   }
 

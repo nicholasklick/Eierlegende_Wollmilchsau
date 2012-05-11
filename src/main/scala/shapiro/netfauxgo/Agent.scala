@@ -21,13 +21,10 @@ abstract class Agent(val world: World) extends Actor {
 
   notifyPatchThatWeHaveStarted(currentPatch())
 
-  var coordinated:Coordinated = Coordinated()
-
   def doTick() = {
     //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here! " + getOtherAgentsInVicinity(2).length + " NEAR here!")
     //println("In doTick... " + getOtherAgentsInVicinity(2).length + " little buddies are NEAR here!")
-    coordinated = Coordinated()
-    coordinated atomic {
+    atomic {
       implicit txn =>
         if (!deadRef.get) tick()
     }
@@ -40,14 +37,15 @@ abstract class Agent(val world: World) extends Actor {
   override def receive = {
     case Tick =>
       doTick()
-    case coordinated @ Coordinated(Die) => die()
+    case Die => die()
   }
 
   def die() =  atomic {
     implicit txn => if (deadRef.get){
-      throw AlreadyDeadException
+      sender ! AlreadyDead
     } else {
-      deadRef.set(true)
+      sender ! DidDie
+      world.manager ! KillAgent(self)
     }
   }
 
@@ -92,15 +90,11 @@ abstract class Agent(val world: World) extends Actor {
   }
 
   def killAgent(agentRef: ActorRef) = {
-    try {
-      atomic { implicit t =>
-        agentRef ! coordinated(Die)
-        world.manager ! coordinated(KillAgent(agentRef))
-      }
-    } catch {
-      case AlreadyDeadException => false
+    val future = agentRef ? Die
+    Await.result(future, 1 second) match {
+      case DidDie => true
+      case AlreadyDead => false
     }
-    true
   }
 
 }
