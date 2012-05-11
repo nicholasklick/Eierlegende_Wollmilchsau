@@ -91,7 +91,7 @@ abstract class Agent(val world: World) extends Actor {
 
   def killAgent(agentRef: ActorRef) = {
     val future = agentRef ? Die
-    Await.result(future, 1 second) match {
+    Await.result(future, 5 seconds) match {
       case DidDie => true
       case AlreadyDead => false
     }
