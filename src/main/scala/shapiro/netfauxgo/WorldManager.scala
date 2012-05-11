@@ -14,19 +14,19 @@ class WorldManager(val world: World) extends Actor {
 
   private var readyForNewTick = true
 
-  private var deadPool = Ref(Vector[ActorRef]()) // these guys have been killed this tick, and should be removed from the database and the list of critters to tick
+  private var deadPool = makeNewDeadpool()  // these guys have been killed this tick, and should be removed from the database and the list of critters to tick
 
   var startTime = System.nanoTime()
 
   def tick() = {
-    val pool = deadPool.single()
-    if (pool.length > 0){
-      pool.foreach( c => c ! PoisonPill)
-      critters = critters.filter(c => !pool.contains(c))
+    val pool = deadPool.single
+    if (pool.size > 0){
+      critters = critters.filterNot(c => pool.contains(c))
+      pool.foreach{ case (k:ActorRef, v:KillAgent) => tellAgentToDie(k, v)  }
       ///// FIXME /////
       /// add code to remove from database here ///
       //// FIXME /////
-      deadPool.single()=Vector[ActorRef]()
+      deadPool = makeNewDeadpool()
     }
     if (readyForNewTick && critters.length > 0) {
       readyForNewTick = false
@@ -35,6 +35,10 @@ class WorldManager(val world: World) extends Actor {
       agentCount = critters.length
       critters.foreach(agent => agent ! Tick)
     }
+  }
+
+  def tellAgentToDie(target:ActorRef, message:KillAgent) = {
+    target ! message
   }
 
   def receive = {
@@ -54,10 +58,17 @@ class WorldManager(val world: World) extends Actor {
     case Tick =>
       tick()
 
-    case KillAgent(agentRef) => {
-      atomic  { implicit t => deadPool.set(deadPool.get :+ agentRef) }
+    case KillAgent(killerRef, targetRef) => {
+      atomic  {
+        implicit t => {
+          if (! deadPool.contains(targetRef))
+            deadPool += (targetRef -> KillAgent(killerRef, targetRef))
+        }
+      }
     }
   }
-
+  def makeNewDeadpool():TMap[ActorRef, KillAgent] = {
+    TMap[ActorRef, KillAgent]()
+  }
 
 }

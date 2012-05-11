@@ -2,13 +2,7 @@ package shapiro.netfauxgo
 
 import akka.actor.ActorRef
 
-case object Die
-
-case class KillAgent(val agent:ActorRef)
-
-case object DidDie
-
-case object AlreadyDead
+case class KillAgent(val killer:ActorRef, val target:ActorRef)
 
 case class AddAgent(val agent:ActorRef)
 

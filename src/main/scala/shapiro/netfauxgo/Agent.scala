@@ -37,15 +37,10 @@ abstract class Agent(val world: World) extends Actor {
   override def receive = {
     case Tick =>
       doTick()
-    case Die => die()
-  }
-
-  def die() =  atomic {
-    implicit txn => if (deadRef.get){
-      sender ! AlreadyDead
-    } else {
-      sender ! DidDie
-      world.manager ! KillAgent(self)
+    case KillAgent(killer, target) => {
+      assert(target == self)
+      deadRef.single() = true
+      //FIXME: send killer a notificaiton that it got us
     }
   }
 
@@ -90,11 +85,7 @@ abstract class Agent(val world: World) extends Actor {
   }
 
   def killAgent(agentRef: ActorRef) = {
-    val future = agentRef ? Die
-    Await.result(future, 5 seconds) match {
-      case DidDie => true
-      case AlreadyDead => false
-    }
+    world.manager ! KillAgent(self, agentRef)
   }
 
 }
