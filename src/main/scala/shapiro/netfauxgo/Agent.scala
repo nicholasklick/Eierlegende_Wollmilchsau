@@ -2,12 +2,12 @@ package shapiro.netfauxgo
 
 import akka.actor.{ActorSystem, ActorRef, Actor}
 import akka.dispatch.{ExecutionContext, Future, Await}
-import akka.transactor._
 import scala.concurrent.stm._
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import scala.collection.immutable.Map
+import akka.transactor._
 
 
 abstract class Agent(val world: World) extends Actor {
@@ -21,10 +21,13 @@ abstract class Agent(val world: World) extends Actor {
 
   notifyPatchThatWeHaveStarted(currentPatch())
 
+  var coordinated:Coordinated = Coordinated()
+
   def doTick() = {
     //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here! " + getOtherAgentsInVicinity(2).length + " NEAR here!")
     //println("In doTick... " + getOtherAgentsInVicinity(2).length + " little buddies are NEAR here!")
-    atomic {
+    coordinated = Coordinated()
+    coordinated atomic {
       implicit txn =>
         if (!deadRef.get) tick()
     }
@@ -89,13 +92,15 @@ abstract class Agent(val world: World) extends Actor {
   }
 
   def killAgent(agentRef: ActorRef) = {
-    val didKill = Ref(false)
-    val coordinated = Coordinated()
-    coordinated atomic { implicit t =>
-      didKill.set(true)
-      agentRef ! coordinated(Die)
-      world.manager ! coordinated(KillAgent(agentRef))
+    try {
+      atomic { implicit t =>
+        agentRef ! coordinated(Die)
+        world.manager ! coordinated(KillAgent(agentRef))
+      }
+    } catch {
+      case AlreadyDeadException => false
     }
-    didKill.single()
+    true
   }
+
 }
