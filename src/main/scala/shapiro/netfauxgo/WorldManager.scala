@@ -1,6 +1,5 @@
 package shapiro.netfauxgo
 
-import akka.transactor._
 import scala.concurrent.stm._
 import akka.actor._
 
@@ -17,6 +16,12 @@ class WorldManager(val world: World) extends Actor {
   private var deadPool = makeNewDeadpool()  // these guys have been killed this tick, and should be removed from the database and the list of critters to tick
 
   var startTime = System.nanoTime()
+
+  var snapShot = initializeSnapshot()
+
+  def initializeSnapshot() = {
+
+  }
 
   def tick() = {
     val pool = deadPool.single

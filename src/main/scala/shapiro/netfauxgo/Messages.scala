@@ -20,3 +20,5 @@ case object FetchAgentRefs
 
 case class AgentsForPatch(val agentRefs:List[ActorRef])
 
+case class KillSucceeded(val target:ActorRef, val deadGuyState:Map[Any,Any])
+

@@ -1,14 +1,12 @@
 package shapiro.netfauxgo
 
-import akka.actor.{ActorSystem, ActorRef, Actor}
 import akka.dispatch.{ExecutionContext, Future, Await}
 import scala.concurrent.stm._
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import scala.collection.immutable.Map
-import akka.transactor._
-
+import akka.actor.{PoisonPill, ActorSystem, ActorRef, Actor}
 
 abstract class Agent(val world: World) extends Actor {
   val x = Ref(world.width * scala.math.random)
@@ -22,17 +20,16 @@ abstract class Agent(val world: World) extends Actor {
   notifyPatchThatWeHaveStarted(currentPatch())
 
   def doTick() = {
-    //println("In doTick... " + getAgentsForPatchRef(currentPatch).length + " little buddies are here! " + getOtherAgentsInVicinity(2).length + " NEAR here!")
-    //println("In doTick... " + getOtherAgentsInVicinity(2).length + " little buddies are NEAR here!")
     atomic {
       implicit txn =>
         if (!deadRef.get) tick()
     }
     world.manager ! TickComplete
-    //println("tick complete in doTick")
   }
 
   def tick();
+
+  def killSucceeded(deadGuy:ActorRef, state:Map[Any, Any]);
 
   override def receive = {
     case Tick =>
@@ -40,7 +37,11 @@ abstract class Agent(val world: World) extends Actor {
     case KillAgent(killer, target) => {
       assert(target == self)
       deadRef.single() = true
-      //FIXME: send killer a notificaiton that it got us
+      killer ! KillSucceeded(self, junkRef.single.get)
+      self ! PoisonPill
+    }
+    case KillSucceeded(deadGuy:ActorRef, state:Map[Any,Any]) => {
+      killSucceeded(deadGuy, state)
     }
   }
 
@@ -78,14 +79,14 @@ abstract class Agent(val world: World) extends Actor {
     result match {
       case AgentsForPatch(agentRefs) =>
         agentRefs
-      case None =>
+      case None => {
         println("Didn't get any agents back, making an empty list")
         List[ActorRef]()
+      }
     }
   }
 
   def killAgent(agentRef: ActorRef) = {
     world.manager ! KillAgent(self, agentRef)
   }
-
 }

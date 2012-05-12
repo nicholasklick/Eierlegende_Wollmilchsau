@@ -1,6 +1,7 @@
 package shapiro.netfauxgo
 
 import akka.actor._
+import concurrent.stm.TSet
 
 
 class World(val width: Int, val height: Int) {
@@ -31,6 +32,32 @@ class World(val width: Int, val height: Int) {
       }
     }
     ret
+  }
+
+}
+
+class PatchSnapshot(val world:World, val x: Int, val y: Int, val state:Map[Any, Any])  {
+  val agents = TSet[Map[Any, Any]]()
+}
+
+class AgentSnapshot(val world:World, val klass:String, val x: Double, val y: Double, val state:Map[Any, Any]) {
+  def matches( matcher:(Map[Any, Any]) => Boolean ):Boolean = {
+    matcher(state)
+  }
+
+  def matches (klass: String) = {
+    klass == this.klass
+  }
+  def matches( matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
+    matcher(x, y, state)
+  }
+
+  def matches(klass:String)(matcher: (Map[Any, Any]) => Boolean):Boolean = {
+    this.klass == klass && matcher(state)
+  }
+
+  def matches(klass:String)(matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
+    this.klass == klass && matcher(x, y, state)
   }
 
 }
