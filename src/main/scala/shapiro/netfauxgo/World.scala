@@ -2,6 +2,7 @@ package shapiro.netfauxgo
 
 import akka.actor._
 import concurrent.stm.TSet
+import akka.dispatch.Await
 
 
 class World(val width: Int, val height: Int) {
@@ -9,7 +10,9 @@ class World(val width: Int, val height: Int) {
   private val grid = Array.tabulate(width, height) {
     (x, y) => system.actorOf(Props(new Patch(this, x, y)))
   }
-  val manager = system.actorOf(Props(new WorldManager(this)))
+
+  val manager = system.actorOf(Props(new WorldManager(this) ))
+
   val agentPatchMover = system.actorOf(Props[AgentPatchMover])
   //Actor.actorOf[AgentPatchMover].start()
 
@@ -33,31 +36,5 @@ class World(val width: Int, val height: Int) {
     }
     ret
   }
-
 }
 
-class PatchSnapshot(val world:World, val x: Int, val y: Int, val state:Map[Any, Any])  {
-  val agents = TSet[Map[Any, Any]]()
-}
-
-class AgentSnapshot(val world:World, val klass:String, val x: Double, val y: Double, val state:Map[Any, Any]) {
-  def matches( matcher:(Map[Any, Any]) => Boolean ):Boolean = {
-    matcher(state)
-  }
-
-  def matches (klass: String) = {
-    klass == this.klass
-  }
-  def matches( matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
-    matcher(x, y, state)
-  }
-
-  def matches(klass:String)(matcher: (Map[Any, Any]) => Boolean):Boolean = {
-    this.klass == klass && matcher(state)
-  }
-
-  def matches(klass:String)(matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
-    this.klass == klass && matcher(x, y, state)
-  }
-
-}

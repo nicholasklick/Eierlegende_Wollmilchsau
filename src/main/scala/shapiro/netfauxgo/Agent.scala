@@ -17,9 +17,14 @@ abstract class Agent(val world: World) extends Actor {
 
   val deadRef = Ref(false)
 
+  var snapshot = Array[Array[PatchSnapshot]]()
+
   notifyPatchThatWeHaveStarted(currentPatch())
 
-  def doTick() = {
+
+
+  def doTick(snapshot:Array[Array[PatchSnapshot]]) = {
+    this.snapshot = snapshot
     atomic {
       implicit txn =>
         if (!deadRef.get) tick()
@@ -32,16 +37,20 @@ abstract class Agent(val world: World) extends Actor {
   def killSucceeded(deadGuy:ActorRef, state:Map[Any, Any]);
 
   override def receive = {
-    case Tick =>
-      doTick()
+    case Tick(snapshot) =>
+      doTick(snapshot)
     case KillAgent(killer, target) => {
       assert(target == self)
       deadRef.single() = true
+      currentPatch() ! AgentLeft(self)
       killer ! KillSucceeded(self, junkRef.single.get)
       self ! PoisonPill
     }
     case KillSucceeded(deadGuy:ActorRef, state:Map[Any,Any]) => {
       killSucceeded(deadGuy, state)
+    }
+    case SnapshotRequest => {
+      sender ! AgentSnapshotM( new AgentSnapshot(this.getClass.toString(), x.single.get, y.single.get, junkRef.single.get, self))
     }
   }
 
@@ -72,6 +81,10 @@ abstract class Agent(val world: World) extends Actor {
     getAgentsForPatchRef(currentPatch())
   }
 
+  def killAgent(agentRef: ActorRef) = {
+    world.manager ! KillAgent(self, agentRef)
+  }
+
   def getAgentsForPatchRef(patchRef: ActorRef): List[ActorRef] = {
     //	  (patchRef ? FetchAgentRefs).as[AgentsForPatch] match{
     val future = patchRef ? FetchAgentRefs
@@ -85,8 +98,27 @@ abstract class Agent(val world: World) extends Actor {
       }
     }
   }
+}
 
-  def killAgent(agentRef: ActorRef) = {
-    world.manager ! KillAgent(self, agentRef)
+
+class AgentSnapshot(val klass:String, val x: Double, val y: Double, val state:Map[Any, Any], val agentRef:ActorRef) {
+  def matches( matcher:(Map[Any, Any]) => Boolean ):Boolean = {
+    matcher(state)
   }
+
+  def matches (klass: String) = {
+    klass == this.klass
+  }
+  def matches( matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
+    matcher(x, y, state)
+  }
+
+  def matches(klass:String)(matcher: (Map[Any, Any]) => Boolean):Boolean = {
+    this.klass == klass && matcher(state)
+  }
+
+  def matches(klass:String)(matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
+    this.klass == klass && matcher(x, y, state)
+  }
+
 }

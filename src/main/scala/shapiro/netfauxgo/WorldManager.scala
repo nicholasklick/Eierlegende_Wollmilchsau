@@ -2,6 +2,12 @@ package shapiro.netfauxgo
 
 import scala.concurrent.stm._
 import akka.actor._
+import akka.dispatch._
+import akka.util.duration._
+import akka.pattern.ask
+import akka.util.Timeout
+
+
 
 class WorldManager(val world: World) extends Actor {
   private val system = ActorSystem("MySystem")
@@ -17,10 +23,15 @@ class WorldManager(val world: World) extends Actor {
 
   var startTime = System.nanoTime()
 
-  var snapShot = initializeSnapshot()
+  var snapShot = initializeSnapshot()     //most recent snapshot of the world
 
-  def initializeSnapshot() = {
-
+  def initializeSnapshot():Array[Array[PatchSnapshot]] = {
+    implicit val timeout:Timeout = new Timeout(1 second)
+    Array.tabulate(world.width, world.height){
+      (x, y) => Await.result( (world.patchAt(x, y) ? SnapshotRequest), timeout.duration) match {
+        case PatchSnapshotM(pS) => pS
+      }
+    }
   }
 
   def tick() = {
@@ -34,11 +45,13 @@ class WorldManager(val world: World) extends Actor {
       deadPool = makeNewDeadpool()
     }
     if (readyForNewTick && critters.length > 0) {
+      snapShot = initializeSnapshot()
+      val tick = Tick(snapShot)
       readyForNewTick = false
       startTime = System.nanoTime()
       agentsComplete = 0
       agentCount = critters.length
-      critters.foreach(agent => agent ! Tick)
+      critters.foreach(agent => agent ! tick)
     }
   }
 
@@ -76,4 +89,25 @@ class WorldManager(val world: World) extends Actor {
     TMap[ActorRef, KillAgent]()
   }
 
+
+  def patchSnapshotsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[PatchSnapshot] = {
+    val x_min = if (x_pos - radius >= 0) x_pos - radius else 0
+    val x_max = if (x_pos + radius <= world.width) x_pos + radius else world.width
+
+    val y_min = if (y_pos - radius >= 0) y_pos - radius else 0
+    val y_max = if (y_pos + radius <= world.height) y_pos + radius else world.height
+
+    var ret = List[PatchSnapshot]()
+    for (x <- x_min.round.until(x_max.round)) {
+      for (y <- y_min.round.until(y_max.round)) {
+        val thePatch = snapShot(x.toInt)(y.toInt)
+        ret = thePatch :: ret
+      }
+    }
+    ret
+  }
+
 }
+
+
+
