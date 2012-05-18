@@ -1,6 +1,8 @@
 package shapiro.netfauxgo
 
 import akka.actor._
+import concurrent.stm.TSet
+import akka.dispatch.Await
 
 
 class World(val width: Int, val height: Int) {
@@ -8,7 +10,9 @@ class World(val width: Int, val height: Int) {
   private val grid = Array.tabulate(width, height) {
     (x, y) => system.actorOf(Props(new Patch(this, x, y)))
   }
-  val manager = system.actorOf(Props(new WorldManager(this)))
+
+  val manager = system.actorOf(Props(new WorldManager(this) ))
+
   val agentPatchMover = system.actorOf(Props[AgentPatchMover])
   //Actor.actorOf[AgentPatchMover].start()
 
@@ -16,7 +20,7 @@ class World(val width: Int, val height: Int) {
     grid(x.toInt)(y.toInt)
   }
 
-  def patchesWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {
+  def patchRefsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {
     val x_min = if (x_pos - radius >= 0) x_pos - radius else 0
     val x_max = if (x_pos + radius <= width) x_pos + radius else width
 
@@ -32,5 +36,5 @@ class World(val width: Int, val height: Int) {
     }
     ret
   }
-
 }
+

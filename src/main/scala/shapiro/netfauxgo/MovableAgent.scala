@@ -9,6 +9,7 @@ abstract class MovableAgent(world: World) extends Agent(world) {
   def forward(steps: Double) = {
     atomic {
       implicit txn => {
+        val oldPatch = currentPatch()
         val oldX = x.get
         val oldY = y.get
         var newX = (oldX + steps * scala.math.cos(scala.math.Pi * (heading.get / 180.0))) % world.width
@@ -23,12 +24,10 @@ abstract class MovableAgent(world: World) extends Agent(world) {
         y.swap(newY)
 
 
-        val oldPatch = currentPatch
-        currentPatch = findCurrentPatch()
-        val newPatch = currentPatch
+        val newPatch = currentPatch()
 
         if (oldPatch != newPatch) {
-          world.agentPatchMover ! MovePatches(self, oldPatch, newPatch)
+          world.agentPatchMover ! MovePatches(self, oldPatch.patchRef, newPatch.patchRef)
         }
       }
     }

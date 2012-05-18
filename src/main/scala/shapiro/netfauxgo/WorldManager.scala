@@ -1,8 +1,13 @@
 package shapiro.netfauxgo
 
-import akka.transactor._
 import scala.concurrent.stm._
 import akka.actor._
+import akka.dispatch._
+import akka.util.duration._
+import akka.pattern.ask
+import akka.util.Timeout
+
+
 
 class WorldManager(val world: World) extends Actor {
   private val system = ActorSystem("MySystem")
@@ -14,16 +19,45 @@ class WorldManager(val world: World) extends Actor {
 
   private var readyForNewTick = true
 
+  private var deadPool = makeNewDeadpool()  // these guys have been killed this tick, and should be removed from the database and the list of critters to tick
+
   var startTime = System.nanoTime()
 
+  var snapShot = initializeSnapshot()     //most recent snapshot of the world
+
+  def initializeSnapshot():WorldSnapshot = {
+    implicit val timeout:Timeout = new Timeout(1 second)
+    val patches = Array.tabulate(world.width, world.height){
+      (x, y) => Await.result( (world.patchAt(x, y) ? SnapshotRequest), timeout.duration) match {
+        case PatchSnapshotM(pS) => pS
+      }
+    }
+    new WorldSnapshot(patches)
+  }
+
   def tick() = {
+    val pool = deadPool.single
+    if (pool.size > 0){
+      critters = critters.filterNot(c => pool.contains(c))
+      pool.foreach{ case (k:ActorRef, v:KillAgent) => tellAgentToDie(k, v)  }
+      ///// FIXME /////
+      /// add code to remove from database here ///
+      //// FIXME /////
+      deadPool = makeNewDeadpool()
+    }
     if (readyForNewTick && critters.length > 0) {
+      snapShot = initializeSnapshot()
+      val tick = Tick(snapShot)
       readyForNewTick = false
       startTime = System.nanoTime()
       agentsComplete = 0
       agentCount = critters.length
-      critters.foreach(agent => agent ! Tick)
+      critters.foreach(agent => agent ! tick)
     }
+  }
+
+  def tellAgentToDie(target:ActorRef, message:KillAgent) = {
+    target ! message
   }
 
   def receive = {
@@ -42,7 +76,26 @@ class WorldManager(val world: World) extends Actor {
     }
     case Tick =>
       tick()
+
+    case KillAgent(killerRef, targetRef) => {
+      atomic  {
+        implicit t => {
+          if (! deadPool.contains(targetRef))
+            deadPool += (targetRef -> KillAgent(killerRef, targetRef))
+        }
+      }
+    }
+  }
+  def makeNewDeadpool():TMap[ActorRef, KillAgent] = {
+    TMap[ActorRef, KillAgent]()
   }
 
 
+  def patchSnapshotsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[PatchSnapshot] = {
+    snapShot.patchSnapshotsWithinRange(x_pos, y_pos, radius)
+  }
+
 }
+
+
+

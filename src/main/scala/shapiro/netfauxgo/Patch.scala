@@ -5,6 +5,11 @@ import scala.concurrent.stm._
 import akka.actor._
 import scala.collection.immutable.Vector
 import scala.collection.immutable.Map
+import akka.dispatch.Await
+import akka.util.duration._
+import akka.pattern.ask
+import akka.util.Timeout
+
 
 
 class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
@@ -50,6 +55,25 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
           sender ! AgentsForPatch(agentRefs.get.toList)
         }
       }
+    case SnapshotRequest => {
+       sender ! PatchSnapshotM(getSnapShot())
+    }
   }
 
+  def getSnapShot():PatchSnapshot = {
+    new PatchSnapshot(x, y, junkRef.single.get, self, getAgentSnapshots())
+  }
+
+  def getAgentSnapshots():List[AgentSnapshot] = {
+    agentRefs.single.get.toList.foldLeft(List[AgentSnapshot]())((l, r) => getAgentSnapshot(r) :: l)
+  }
+
+  def getAgentSnapshot(agentRef:ActorRef) = {
+    implicit val timeout:Timeout = 1 second
+    val future = agentRef ? SnapshotRequest
+    Await.result(future, 1 second) match {
+      case AgentSnapshotM(aS) => aS
+    }
+  }
 }
+
