@@ -20,7 +20,7 @@ class World(val width: Int, val height: Int) {
     grid(x.toInt)(y.toInt)
   }
 
-  def patchesWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {
+  def patchRefsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {
     val x_min = if (x_pos - radius >= 0) x_pos - radius else 0
     val x_max = if (x_pos + radius <= width) x_pos + radius else width
 

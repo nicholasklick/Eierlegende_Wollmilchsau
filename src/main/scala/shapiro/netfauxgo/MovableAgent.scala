@@ -27,7 +27,7 @@ abstract class MovableAgent(world: World) extends Agent(world) {
         val newPatch = currentPatch()
 
         if (oldPatch != newPatch) {
-          world.agentPatchMover ! MovePatches(self, oldPatch, newPatch)
+          world.agentPatchMover ! MovePatches(self, oldPatch.patchRef, newPatch.patchRef)
         }
       }
     }

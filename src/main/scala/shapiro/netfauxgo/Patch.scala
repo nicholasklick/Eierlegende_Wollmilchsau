@@ -77,8 +77,3 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
   }
 }
 
-class PatchSnapshot(val x: Int, val y: Int, val state:Map[Any, Any], val patchRef:ActorRef, val agentSnapshots:List[AgentSnapshot]) {
-  def matches( matcher:(Map[Any, Any]) => Boolean ):Boolean = {
-    matcher(state)
-  }
-}

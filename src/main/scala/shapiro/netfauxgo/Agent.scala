@@ -17,13 +17,11 @@ abstract class Agent(val world: World) extends Actor {
 
   val deadRef = Ref(false)
 
-  var snapshot = Array[Array[PatchSnapshot]]()
+  var snapshot = new WorldSnapshot(Array[Array[PatchSnapshot]]())
 
-  notifyPatchThatWeHaveStarted(currentPatch())
+  notifyPatchThatWeHaveStarted(currentPatchRef())
 
-
-
-  def doTick(snapshot:Array[Array[PatchSnapshot]]) = {
+  def doTick(snapshot:WorldSnapshot) = {
     this.snapshot = snapshot
     atomic {
       implicit txn =>
@@ -42,7 +40,7 @@ abstract class Agent(val world: World) extends Actor {
     case KillAgent(killer, target) => {
       assert(target == self)
       deadRef.single() = true
-      currentPatch() ! AgentLeft(self)
+      currentPatchRef() ! AgentLeft(self)
       killer ! KillSucceeded(self, junkRef.single.get)
       self ! PoisonPill
     }
@@ -58,8 +56,19 @@ abstract class Agent(val world: World) extends Actor {
     patchRef ! AgentEntered(self)
   }
 
-  def currentPatch(): ActorRef = {
-    world.patchAt(x.single(), y.single())
+  def currentPatchRef(): ActorRef = {
+    world.patchAt(x.single.get, y.single.get)
+  }
+
+  def currentPatch():PatchSnapshot = {
+    try{
+      snapshot.patches(x.single.get.toInt)(y.single.get.toInt)
+    } catch {
+      case _ => {
+        println("Exception at " + x.single.get + ", " + y.single.get + "patches width = " + snapshot.patches.length + " height = "+ snapshot.patches(0).length)
+        currentPatch()
+      }
+    }
   }
 
   def getJunk(key:Any): Any = {
@@ -70,55 +79,29 @@ abstract class Agent(val world: World) extends Actor {
     junkRef.single() = junkRef.single() + (key -> value)
   }
 
-  def getOtherAgentsInVicinity(radius: Int): List[ActorRef] = {
-    val patches = world.patchesWithinRange(x.single(), y.single(), radius)
+  def getOtherAgentsInVicinity(radius: Int): List[AgentSnapshot] = {
+    val patches = snapshot.patchSnapshotsWithinRange(x.single(), y.single(), radius)
 
-    val everyone = patches.foldLeft(List[ActorRef]())((l, r) => getAgentsForPatchRef(r) ::: l)
+    val everyone = patches.foldLeft(List[AgentSnapshot]())((l, r) => getAgentsForPatchSnapshot(r) ::: l)
     everyone.filter( a => a != self)
   }
 
   def getAgentsOnMyPatch() = {
-    getAgentsForPatchRef(currentPatch())
+    getAgentsForPatchSnapshot(currentPatch())
   }
 
-  def killAgent(agentRef: ActorRef) = {
+  def getAgentsForPatchSnapshot(patchSnapshot:PatchSnapshot) = {
+    patchSnapshot.agentSnapshots
+  }
+
+  def killAgent(agent:AgentSnapshot):Unit = {
+    killAgent(agent.agentRef)
+  }
+
+  def killAgent(agentRef: ActorRef):Unit = {
     world.manager ! KillAgent(self, agentRef)
   }
 
-  def getAgentsForPatchRef(patchRef: ActorRef): List[ActorRef] = {
-    //	  (patchRef ? FetchAgentRefs).as[AgentsForPatch] match{
-    val future = patchRef ? FetchAgentRefs
-    val result = Await.result(future, 1 second)
-    result match {
-      case AgentsForPatch(agentRefs) =>
-        agentRefs
-      case None => {
-        println("Didn't get any agents back, making an empty list")
-        List[ActorRef]()
-      }
-    }
-  }
 }
 
 
-class AgentSnapshot(val klass:String, val x: Double, val y: Double, val state:Map[Any, Any], val agentRef:ActorRef) {
-  def matches( matcher:(Map[Any, Any]) => Boolean ):Boolean = {
-    matcher(state)
-  }
-
-  def matches (klass: String) = {
-    klass == this.klass
-  }
-  def matches( matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
-    matcher(x, y, state)
-  }
-
-  def matches(klass:String)(matcher: (Map[Any, Any]) => Boolean):Boolean = {
-    this.klass == klass && matcher(state)
-  }
-
-  def matches(klass:String)(matcher: (Double, Double, (Map[Any, Any])) => Boolean):Boolean = {
-    this.klass == klass && matcher(x, y, state)
-  }
-
-}

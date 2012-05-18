@@ -12,7 +12,7 @@ case class AgentLeft(val agent:ActorRef)
 
 case class AgentEntered(val agent:ActorRef)
 
-case class Tick(val snapshot:Array[Array[PatchSnapshot]])
+case class Tick(val snapshot:WorldSnapshot)
 
 case object TickComplete
 
