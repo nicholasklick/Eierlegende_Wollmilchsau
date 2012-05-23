@@ -56,11 +56,11 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
         }
       }
     case SnapshotRequest => {
-       sender ! PatchSnapshotM(getSnapShot())
+       sender ! PatchSnapshotM(getSnapshot())
     }
   }
 
-  def getSnapShot():PatchSnapshot = {
+  def getSnapshot():PatchSnapshot = {
     new PatchSnapshot(x, y, junkRef.single.get, self, getAgentSnapshots())
   }
 

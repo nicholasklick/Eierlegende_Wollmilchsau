@@ -14,7 +14,6 @@ class World(val width: Int, val height: Int) {
   val manager = system.actorOf(Props(new WorldManager(this) ))
 
   val agentPatchMover = system.actorOf(Props[AgentPatchMover])
-  //Actor.actorOf[AgentPatchMover].start()
 
   def patchAt(x: Double, y: Double): ActorRef = {
     grid(x.toInt)(y.toInt)

@@ -11,14 +11,25 @@ object Driver {
   print("Spawning world...")
   val world = new World(1000, 1000)
   println("...done")
-  system.scheduler.schedule(50 milliseconds, 100 milliseconds, world.manager, Tick)
 
+
+  def startTicking():Unit ={
+	system.scheduler.schedule(50 milliseconds, 100 milliseconds, world.manager, Tick)
+	println("Ticking!")
+  }
 
   def main(arts: Array[String]): Unit = {
+    // for (i <- 0 until world.width * world.height / 4) {
+    //   val dude = system.actorOf(Props(new MurderousSpacerAgent(world)).withDispatcher("kill-prioritizer"))
+    //   world.manager ! AddAgent(dude)
+    // }
+	print("Spawning starter agents...")
     for (i <- 0 until world.width * world.height / 2) {
-      val dude = system.actorOf(Props(new MurderousSpacerAgent(world)).withDispatcher("kill-prioritizer"))
+      val dude = system.actorOf(Props(new CirclerAgent(world)).withDispatcher("kill-prioritizer"))
       world.manager ! AddAgent(dude)
     }
+	println("...done")
+	startTicking()
   }
 
 }
