@@ -44,7 +44,7 @@ abstract class Agent(val world: World) extends Actor {
       killer ! KillSucceeded(self, junkRef.single.get)
       self ! PoisonPill
     }
-    case KillSucceeded(deadGuy:ActorRef, state:Map[Any,Any]) => {
+    case KillSucceeded(deadGuy:ActorRef, state:Map[_,_]) => {
       killSucceeded(deadGuy, state)
     }
     case SnapshotRequest => {
