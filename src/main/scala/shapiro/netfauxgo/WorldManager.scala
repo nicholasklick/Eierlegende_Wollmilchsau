@@ -23,9 +23,9 @@ class WorldManager(val world: World) extends Actor {
 
   var startTime = System.nanoTime()
 
-  var snapShot = initializeSnapshot()     //most recent snapshot of the world
+  var snapShot = initializeSnapshotSequential()     //most recent snapshot of the world
 
-  def initializeSnapshot():WorldSnapshot = {
+  def initializeSnapshotSequential():WorldSnapshot = {
     implicit val timeout:Timeout = new Timeout(5 seconds)
     val patches = Array.tabulate(world.width, world.height){
       (x, y) => Await.result( (world.patchAt(x, y) ? SnapshotRequest), timeout.duration) match {
@@ -33,6 +33,31 @@ class WorldManager(val world: World) extends Actor {
       }
     }
     new WorldSnapshot(patches)
+  }
+
+  def initializeSnapshotParallel():WorldSnapshot = {
+    val patchColSnapshots = Array.tabulate(world.width){
+      (x) => snapshotForColumn(x)
+    }
+    new WorldSnapshot(patchColSnapshots)
+  }
+
+  def snapshotForColumn(x:Int) = {
+    //println("Collecting column "+x)
+    implicit val timeoutDuration = 5 seconds
+    implicit val timeout = new Timeout(timeoutDuration)
+    //implicit val myContext = ExecutionContext.fromExecutorService(system)
+    implicit val mySystem = system
+
+    val colListFutures = world.col(x).map( patch => patch ? SnapshotRequest ).toList
+    val colFutureList = Future.sequence(colListFutures)
+    val snapshotMessages = Await.result(colFutureList, timeoutDuration).asInstanceOf[List[PatchSnapshotM]]
+    val snapshotList = snapshotMessages.map( _.pS )
+    snapshotList.toArray   //[PatchSnapshot]
+  }
+
+  def initializeSnapshot() = {
+    initializeSnapshotParallel()
   }
 
   def tick() = {
