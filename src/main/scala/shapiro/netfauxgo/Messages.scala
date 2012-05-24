@@ -14,7 +14,9 @@ case class AgentEntered(val agent:ActorRef)
 
 case class Tick(val snapshot:WorldSnapshot)
 
-case object TickComplete
+case class TickAgents(val snapshot:WorldSnapshot)
+
+case class TickComplete(val snapshot:AgentSnapshot)
 
 case object FetchAgentRefs
 

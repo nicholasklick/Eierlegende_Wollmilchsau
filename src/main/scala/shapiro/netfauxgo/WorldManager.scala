@@ -26,7 +26,7 @@ class WorldManager(val world: World) extends Actor {
   var snapShot = initializeSnapshot()     //most recent snapshot of the world
 
   def initializeSnapshot():WorldSnapshot = {
-    implicit val timeout:Timeout = new Timeout(1 second)
+    implicit val timeout:Timeout = new Timeout(5 seconds)
     val patches = Array.tabulate(world.width, world.height){
       (x, y) => Await.result( (world.patchAt(x, y) ? SnapshotRequest), timeout.duration) match {
         case PatchSnapshotM(pS) => pS

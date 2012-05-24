@@ -11,7 +11,7 @@ class MurderousSpacerAgent(world: World) extends MovableAgent(world) {
     }
   }
 
-  def killSucceeded(deadGuy:ActorRef, state:Map[Any, Any]):Unit ={
+  def killSucceeded(deadGuy:ActorRef, state:Map[_, _]):Unit ={
     //println("I pity the foo! " + deadGuy)
   }
 }

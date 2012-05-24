@@ -16,6 +16,7 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
   val agentRefs = Ref(Vector[ActorRef]())
   val junkRef = Ref(Map[Any,Any]())
 
+  val currentSnapshottedAgents = Ref(Map[ActorRef, AgentSnapshot]())
 
   def getJunk(key:Any): Any = {
     junkRef.single().get(key).get
@@ -34,7 +35,10 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
 
   def agentLeft(agentRef: ActorRef) {
     atomic {
-      implicit txn => agentRefs.set(agentRefs.get.filter((ar) => ar != agentRef))
+      implicit txn => {
+        agentRefs.set(agentRefs.get.filter((ar) => ar != agentRef))
+        currentSnapshottedAgents.transform { _ - agentRef }
+      }
     }
     //println("Agent " + agentRef + " left patch ("+this+")")
   }
@@ -58,22 +62,26 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
     case SnapshotRequest => {
        sender ! PatchSnapshotM(getSnapshot())
     }
+    case TickComplete(agentSnapshot) => {
+      atomic {
+        implicit txn => {
+          currentSnapshottedAgents.transform { _ + (agentSnapshot.agentRef -> agentSnapshot)  }
+        }
+      }
+    }
+    case TickAgents(snapshot) => {
+      currentSnapshottedAgents.single() = Map[ActorRef, AgentSnapshot]()
+      agentRefs.single.get.foreach(agent => agent ! Tick(snapshot))
+    }
+
   }
 
   def getSnapshot():PatchSnapshot = {
-    new PatchSnapshot(x, y, junkRef.single.get, self, getAgentSnapshots())
+    new PatchSnapshot(x, y, junkRef.single.get, self, getAgentSnapshots().toList)
   }
 
-  def getAgentSnapshots():List[AgentSnapshot] = {
-    agentRefs.single.get.toList.foldLeft(List[AgentSnapshot]())((l, r) => getAgentSnapshot(r) :: l)
-  }
-
-  def getAgentSnapshot(agentRef:ActorRef) = {
-    implicit val timeout:Timeout = 1 second
-    val future = agentRef ? SnapshotRequest
-    Await.result(future, 1 second) match {
-      case AgentSnapshotM(aS) => aS
-    }
+  def getAgentSnapshots():Iterable[AgentSnapshot] = {
+    currentSnapshottedAgents.single.get.values
   }
 }
 

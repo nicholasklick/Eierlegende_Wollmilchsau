@@ -17,22 +17,23 @@ abstract class Agent(val world: World) extends Actor {
 
   val deadRef = Ref(false)
 
-  var snapshot = new WorldSnapshot(Array[Array[PatchSnapshot]]())
+  var worldSnapshot = new WorldSnapshot(Array[Array[PatchSnapshot]]())
 
   notifyPatchThatWeHaveStarted(currentPatchRef())
 
-  def doTick(snapshot:WorldSnapshot) = {
-    this.snapshot = snapshot
+  def doTick(worldSnapshot:WorldSnapshot) = {
+    this.worldSnapshot = worldSnapshot
     atomic {
       implicit txn =>
         if (!deadRef.get) tick()
     }
+    currentPatchRef() ! TickComplete(snapshot())
     world.manager ! TickComplete
   }
 
   def tick();
 
-  def killSucceeded(deadGuy:ActorRef, state:Map[Any, Any]);
+  def killSucceeded(deadGuy:ActorRef, state:Map[_, _]);
 
   override def receive = {
     case Tick(snapshot) =>
@@ -40,15 +41,16 @@ abstract class Agent(val world: World) extends Actor {
     case KillAgent(killer, target) => {
       assert(target == self)
       deadRef.single() = true
-      currentPatchRef() ! AgentLeft(self)
-      killer ! KillSucceeded(self, junkRef.single.get)
+      val killSucceeded = KillSucceeded(self, junkRef.single.get)
+      currentPatchRef() ! killSucceeded
+      killer ! killSucceeded
       self ! PoisonPill
     }
     case KillSucceeded(deadGuy:ActorRef, state:Map[_,_]) => {
       killSucceeded(deadGuy, state)
     }
     case SnapshotRequest => {
-      sender ! AgentSnapshotM( new AgentSnapshot(this.getClass.toString(), x.single.get, y.single.get, junkRef.single.get, self))
+      sender ! AgentSnapshotM( snapshot())
     }
   }
 
@@ -60,12 +62,16 @@ abstract class Agent(val world: World) extends Actor {
     world.patchAt(x.single.get, y.single.get)
   }
 
+  def snapshot():AgentSnapshot = {
+    new AgentSnapshot(this.getClass.toString(), x.single.get, y.single.get, junkRef.single.get, self)
+  }
+
   def currentPatch():PatchSnapshot = {
     try{
-      snapshot.patches(x.single.get.toInt)(y.single.get.toInt)
+      worldSnapshot.patches(x.single.get.toInt)(y.single.get.toInt)
     } catch {
       case _ => {
-        println("Exception at " + x.single.get + ", " + y.single.get + "patches width = " + snapshot.patches.length + " height = "+ snapshot.patches(0).length)
+        println("Exception at " + x.single.get + ", " + y.single.get + "patches width = " + worldSnapshot.patches.length + " height = "+ worldSnapshot.patches(0).length)
         currentPatch()
       }
     }
@@ -80,7 +86,7 @@ abstract class Agent(val world: World) extends Actor {
   }
 
   def getOtherAgentsInVicinity(radius: Int): List[AgentSnapshot] = {
-    val patches = snapshot.patchSnapshotsWithinRange(x.single(), y.single(), radius)
+    val patches = worldSnapshot.patchSnapshotsWithinRange(x.single(), y.single(), radius)
 
     val everyone = patches.foldLeft(List[AgentSnapshot]())((l, r) => getAgentsForPatchSnapshot(r) ::: l)
     everyone.filter( a => a != self)

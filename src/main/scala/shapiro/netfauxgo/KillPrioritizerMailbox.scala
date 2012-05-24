@@ -11,11 +11,13 @@ class KillPrioritizerMailbox(settings: ActorSystem.Settings, config: Config) ext
   // Create a new PriorityGenerator, lower prio means more important
   PriorityGenerator {
     // 'highpriority messages should be treated first if possible
-    case KillAgent ⇒ 0
+    case KillAgent =>  0
+    case AgentSnapshotM => 1
 
+    case Tick => 99
     // PoisonPill when no other left
-    case PoisonPill    ⇒ 100
+    case PoisonPill   => 100
 
     // We default to 10, which is in between high and low
-    case otherwise     ⇒ 10
+    case otherwise     ⇒ 50
   })
