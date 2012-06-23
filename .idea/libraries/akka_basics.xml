@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="akka basics">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../libs/akka-2.0.1/lib/akka/akka-actor-2.0.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/akka-2.0.1/lib/akka/akka-transactor-2.0.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/akka-2.0.1/lib/akka/scala-stm_2.9.1-0.5.jar!/" />
+      <root url="jar:///usr/local/Cellar/akka/2.0.2/libexec/lib/akka/akka-actor-2.0.2.jar!/" />
+      <root url="jar:///usr/local/Cellar/akka/2.0.2/libexec/lib/akka/akka-transactor-2.0.2.jar!/" />
+      <root url="jar:///usr/local/Cellar/akka/2.0.2/libexec/lib/akka/scala-stm_2.9.1-0.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
