@@ -21,18 +21,18 @@ class QuadTree[T] {
     result
 	}
 	
-	def add(x: Double, y: Double, element: T): T = {
-		val yMap = data.getOrElseUpdate(x, Map[Int,T](y -> element) )
+	def add(x: Double, y: Double, element: T): T = atomic { implicit txn =>
+		val yMap = data.getOrElseUpdate(x, TMap[Double,T](y -> element) )
 		var returnedElement = yMap.getOrElseUpdate(y, element)
 		data.update(x, yMap)
 		returnedElement
 	}
 	
-	def remove(x: Int, y: Int): Option[T] = {
+	def remove(x: Int, y: Int): Option[T] = atomic { implicit txn =>
 		data.getOrElse(x, None ) match{
 			case None => None
-			case map: Map[_,_] => {
-				var yMap = map.asInstanceOf[Map[Int,T]]
+			case map: TMap[_,_] => {
+				var yMap = map.asInstanceOf[TMap[Double,T]]
 				var removedElement: Option[T] = yMap.remove(y)
 				if(yMap.isEmpty)
 					data.remove(x)
@@ -87,15 +87,15 @@ class QuadTree[T] {
 		}
 	}
 	
-	def contains(element: T): Boolean = {
-		for(yMap <- data.single.values; savedElement <- yMap; if(element == savedElement))
+	def contains(element: T): Boolean = atomic { implicit txn =>
+		for(yMap <- data.values; savedElement <- yMap; if(element == savedElement))
 		{
 			return true
 		}
 		return false
 	}
 	
-	def range(radius: Double, x: Double, y: Double): List[T] = {
+	def range(radius: Double, x: Double, y: Double): List[T] = atomic { implicit txn =>
 		var results: List[T] = Nil
 		var xIterator = data.keysIterator
 		while(xIterator.hasNext)
