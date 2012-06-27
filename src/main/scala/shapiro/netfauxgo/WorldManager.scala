@@ -12,10 +12,11 @@ import akka.util.Timeout
 class WorldManager(val world: World) extends Actor {
   private val system = ActorSystem("MySystem")
 
-  private var critters = Vector[ActorRef]()
-  private var agentCount = 0
-  //how many agents we ticked in this pass. We need to keep track of this because new guys might get added mid-tick and we'd wait forever for them
-  private var agentsComplete = 0
+  private var critters = Set[ActorRef]()
+  private var outstandingCritters = Set[ActorRef]()
+  private var agentCount = 0       //how many agents we ticked in this pass.
+
+  private var tickNumber = 1
 
   private var readyForNewTick = true
 
@@ -23,60 +24,16 @@ class WorldManager(val world: World) extends Actor {
 
   var startTime = System.nanoTime()
 
-  var snapShot = initializeSnapshotSequential()     //most recent snapshot of the world
-
-  def initializeSnapshotSequential():WorldSnapshot = {
-    implicit val timeout:Timeout = new Timeout(5 seconds)
-    val patches = Array.tabulate(world.width, world.height){
-      (x, y) => Await.result( (world.patchAt(x, y) ? SnapshotRequest), timeout.duration) match {
-        case PatchSnapshotM(pS) => pS
-      }
-    }
-    new WorldSnapshot(patches)
-  }
-
-  def initializeSnapshotParallel():WorldSnapshot = {
-    val patchColSnapshots = Array.tabulate(world.width){
-      (x) => snapshotForColumn(x)
-    }
-    new WorldSnapshot(patchColSnapshots)
-  }
-
-  def snapshotForColumn(x:Int) = {
-    //println("Collecting column "+x)
-    implicit val timeoutDuration = 5 seconds
-    implicit val timeout = new Timeout(timeoutDuration)
-    //implicit val myContext = ExecutionContext.fromExecutorService(system)
-    implicit val mySystem = system
-
-    val colListFutures = world.col(x).map( patch => patch ? SnapshotRequest ).toList
-    val colFutureList = Future.sequence(colListFutures)
-    val snapshotMessages = Await.result(colFutureList, timeoutDuration).asInstanceOf[List[PatchSnapshotM]]
-    val snapshotList = snapshotMessages.map( _.pS )
-    snapshotList.toArray   //[PatchSnapshot]
-  }
-
-  def initializeSnapshot() = {
-    initializeSnapshotParallel()
-  }
-
   def tick() = {
-    val pool = deadPool.single
-    if (pool.size > 0){
-      critters = critters.filterNot(c => pool.contains(c))
-      pool.foreach{ case (k:ActorRef, v:KillAgent) => tellAgentToDie(k, v)  }
-      ///// FIXME /////
-      /// add code to remove from database here ///
-      //// FIXME /////
-      deadPool = makeNewDeadpool()
-    }
-    if (readyForNewTick && critters.length > 0) {
-      snapShot = initializeSnapshot()
-      val tick = Tick(snapShot)
+    if (readyForNewTick && critters.size > 0) {
+      println("Beginning tick #" + tickNumber)
+      tickNumber += 1
+      val tick = Tick
       readyForNewTick = false
       startTime = System.nanoTime()
-      agentsComplete = 0
-      agentCount = critters.length
+      //agentsComplete = 0
+      agentCount = critters.size
+      outstandingCritters = critters
       critters.foreach(agent => agent ! tick)
     }
   }
@@ -87,27 +44,26 @@ class WorldManager(val world: World) extends Actor {
 
   def receive = {
     case AddAgent(agent) => {
-      critters = critters :+ agent
+      critters += agent
     }
 
-    case TickComplete => {
-      agentsComplete += 1
-      if (agentsComplete >= agentCount) {
-        val endTime = System.nanoTime()
-        val elapsedTime = endTime - startTime
-        println("Tick timer: " + elapsedTime / 1E9 + " seconds \t\t" + agentCount + " agents")
-        readyForNewTick = true
+    case TickComplete(agent) => {
+      outstandingCritters -= agent
+      //println("An agent FINISHED and now there are " + outstandingCritters.size + " outstanding")
+      if (outstandingCritters.size == 0) {
+        finishTick
       }
     }
     case Tick =>
       tick()
 
-    case KillAgent(killerRef, targetRef) => {
-      atomic  {
-        implicit t => {
-          if (! deadPool.contains(targetRef))
-            deadPool += (targetRef -> KillAgent(killerRef, targetRef))
-        }
+    case AgentDied(agent) => {
+      outstandingCritters -= agent
+      critters -= agent
+      world.unregisterActorData(agent.path)
+      //println("An agent DIED and now there are " + outstandingCritters.size + " outstanding")
+      if (outstandingCritters.size == 0) {
+        finishTick
       }
     }
   }
@@ -116,8 +72,11 @@ class WorldManager(val world: World) extends Actor {
   }
 
 
-  def patchSnapshotsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[PatchSnapshot] = {
-    snapShot.patchSnapshotsWithinRange(x_pos, y_pos, radius)
+  def finishTick() = {
+    val endTime = System.nanoTime()
+    val elapsedTime = endTime - startTime
+    println("\t" + elapsedTime / 1E9 + " seconds \t\t" + agentCount + " agents")
+    readyForNewTick = true
   }
 
 }

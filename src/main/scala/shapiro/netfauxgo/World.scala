@@ -2,11 +2,14 @@ package shapiro.netfauxgo
 
 import akka.actor._
 import concurrent.stm.TSet
+import concurrent.stm.TMap
 import akka.dispatch.Await
 
 
 class World(val width: Int, val height: Int) {
   private val system = ActorSystem("MySystem")
+  private val actorData = TMap.empty[ActorPath, ActorData]
+
   private val grid = Array.tabulate(width, height) {
     (x, y) => system.actorOf(Props(new Patch(this, x, y)))
   }
@@ -21,6 +24,18 @@ class World(val width: Int, val height: Int) {
 
   def col(x:Int) = {
     grid(x)
+  }
+
+  def registerActorData(uuid: ActorPath, ad:ActorData) = {
+    actorData.single += (uuid -> ad)
+  }
+
+  def getActorData(uuid: ActorPath) = {
+    actorData.single(uuid)
+  }
+
+  def unregisterActorData(uuid: ActorPath) = {
+    actorData.single -= uuid
   }
 
   def patchRefsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {

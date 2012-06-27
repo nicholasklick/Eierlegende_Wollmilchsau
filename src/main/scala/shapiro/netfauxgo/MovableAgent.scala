@@ -4,30 +4,30 @@ import scala.concurrent.stm._
 
 abstract class MovableAgent(world: World) extends Agent(world) {
 
-  val heading = Ref(360 * scala.math.random)
+  setProperty("heading", 360 * scala.math.random)
 
   def forward(steps: Double) = {
     atomic {
       implicit txn => {
         val oldPatch = currentPatch()
-        val oldX = x.get
-        val oldY = y.get
-        var newX = (oldX + steps * scala.math.cos(scala.math.Pi * (heading.get / 180.0))) % world.width
-        var newY = (oldY + steps * scala.math.sin(scala.math.Pi * (heading.get / 180.0))) % world.height
+        val oldPosition = data.getPosition()
+        val oldX = oldPosition._1
+        val oldY = oldPosition._2
+        val heading = data.getProperty("heading").asInstanceOf[Double]
+        var newX = (oldX + steps * scala.math.cos(scala.math.Pi * (heading / 180.0))) % world.width
+        var newY = (oldY + steps * scala.math.sin(scala.math.Pi * (heading / 180.0))) % world.height
 
-        if (newY < 0)
+        while (newY < 0)
           newY += world.height
-        if (newX < 0)
+        while (newX < 0)
           newX += world.width
 
-        x.swap(newX)
-        y.swap(newY)
-
+        data.setPosition(newX, newY)
 
         val newPatch = currentPatch()
 
         if (oldPatch != newPatch) {
-          world.agentPatchMover ! MovePatches(self, oldPatch.patchRef, newPatch.patchRef)
+          world.agentPatchMover ! MovePatches(self, oldPatch, newPatch)
         }
       }
     }
@@ -35,7 +35,9 @@ abstract class MovableAgent(world: World) extends Agent(world) {
 
   def turn_right(degrees: Double) = {
     atomic {
-      implicit txn => heading.swap((heading.get - degrees) % 360)
+      implicit txn =>
+        val oldHeading = getProperty("heading").asInstanceOf[Double]
+        setProperty("heading", (oldHeading - degrees) % 360)
     }
   }
 

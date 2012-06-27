@@ -11,19 +11,15 @@ import akka.pattern.ask
 import akka.util.Timeout
 
 
-
 class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
-  val agentRefs = Ref(Vector[ActorRef]())
-  val junkRef = Ref(Map[Any,Any]())
+  val data = new ActorData(self, getClass.toString)
+  data.setProperty("agentRefs", Ref(Vector[ActorRef]()))
+  data.setPosition(x, y)
+  world.registerActorData(self.path, data)
 
-  val currentSnapshottedAgents = Ref(Map[ActorRef, AgentSnapshot]())
 
-  def getJunk(key:Any): Any = {
-    junkRef.single().get(key).get
-  }
-
-  def setJunk(key:Any, value:Any): Unit = {
-    junkRef.single() = junkRef.single() + (key -> value)
+  def agentRefs = {
+    data.getProperty("agentRefs").asInstanceOf[Ref[Vector[ActorRef]]]
   }
 
   def agentEntered(agentRef: ActorRef) {
@@ -37,7 +33,6 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
     atomic {
       implicit txn => {
         agentRefs.set(agentRefs.get.filter((ar) => ar != agentRef))
-        currentSnapshottedAgents.transform { _ - agentRef }
       }
     }
     //println("Agent " + agentRef + " left patch ("+this+")")
@@ -59,29 +54,7 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
           sender ! AgentsForPatch(agentRefs.get.toList)
         }
       }
-    case SnapshotRequest => {
-       sender ! PatchSnapshotM(getSnapshot())
-    }
-    case TickComplete(agentSnapshot) => {
-      atomic {
-        implicit txn => {
-          currentSnapshottedAgents.transform { _ + (agentSnapshot.agentRef -> agentSnapshot)  }
-        }
-      }
-    }
-    case TickAgents(snapshot) => {
-      currentSnapshottedAgents.single() = Map[ActorRef, AgentSnapshot]()
-      agentRefs.single.get.foreach(agent => agent ! Tick(snapshot))
-    }
-
   }
 
-  def getSnapshot():PatchSnapshot = {
-    new PatchSnapshot(x, y, junkRef.single.get, self, getAgentSnapshots().toList)
-  }
-
-  def getAgentSnapshots():Iterable[AgentSnapshot] = {
-    currentSnapshottedAgents.single.get.values
-  }
 }
 

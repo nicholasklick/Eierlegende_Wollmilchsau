@@ -10,8 +10,4 @@ class MurderousSpacerAgent(world: World) extends MovableAgent(world) {
       otherGuys.foreach( og => killAgent(og) )
     }
   }
-
-  def killSucceeded(deadGuy:ActorRef, state:Map[_, _]):Unit ={
-    //println("I pity the foo! " + deadGuy)
-  }
 }

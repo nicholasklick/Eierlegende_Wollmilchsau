@@ -7,105 +7,100 @@ import akka.util.Timeout
 import akka.util.duration._
 import scala.collection.immutable.Map
 import akka.actor.{PoisonPill, ActorSystem, ActorRef, Actor}
+import java.util.NoSuchElementException
 
 abstract class Agent(val world: World) extends Actor {
-  val x = Ref(world.width * scala.math.random)
-  val y = Ref(world.height * scala.math.random)
+  val data = new ActorData(self, getClass.toString)
+  data.setPosition(scala.math.random * world.width, scala.math.random * world.height)
+  world.registerActorData(self.path, data)
+
   implicit val timeout = Timeout(1 seconds) // needed for `?` below
 
-  val junkRef = Ref(Map[Any,Any]())
+  notifyPatchThatWeHaveStarted(currentPatch())
 
-  val deadRef = Ref(false)
-
-  var worldSnapshot = new WorldSnapshot(Array[Array[PatchSnapshot]]())
-
-  notifyPatchThatWeHaveStarted(currentPatchRef())
-
-  def doTick(worldSnapshot:WorldSnapshot) = {
-    this.worldSnapshot = worldSnapshot
+  def doTick() = {
     atomic {
       implicit txn =>
-        if (!deadRef.get) tick()
+        if (!data.isDead()){
+          tick()
+          world.manager ! TickComplete(self)
+        }
     }
-    currentPatchRef() ! TickComplete(snapshot())
-    world.manager ! TickComplete
   }
 
   def tick();
 
-  def killSucceeded(deadGuy:ActorRef, state:Map[_, _]);
+  def die() = {
+    data.die()
+    world.manager ! AgentDied(self)
+    ///// TODO /////
+    /// add code to remove from database here ///
+    /// and maybe some after death callbacks? ///
+    //// TODO /////
+    self ! PoisonPill
+  }
 
   override def receive = {
-    case Tick(snapshot) =>
-      doTick(snapshot)
-    case KillAgent(killer, target) => {
-      assert(target == self)
-      deadRef.single() = true
-      val killSucceeded = KillSucceeded(self, junkRef.single.get)
-      currentPatchRef() ! killSucceeded
-      killer ! killSucceeded
-      self ! PoisonPill
-    }
-    case KillSucceeded(deadGuy:ActorRef, state:Map[_,_]) => {
-      killSucceeded(deadGuy, state)
-    }
-    case SnapshotRequest => {
-      sender ! AgentSnapshotM( snapshot())
-    }
+    case Tick =>
+      doTick()
+//    case KillAgent(killer, target) => {
+//      assert(target == self)
+//      deadRef.single() = true
+//      val killSucceeded = KillSucceeded(self, junkRef.single.get)
+//      currentPatchRef() ! killSucceeded
+//      killer ! killSucceeded
+//      self ! PoisonPill
+//    }
+    case Die =>
+      die()
   }
 
   def notifyPatchThatWeHaveStarted(patchRef: ActorRef) = {
     patchRef ! AgentEntered(self)
   }
 
-  def currentPatchRef(): ActorRef = {
-    world.patchAt(x.single.get, y.single.get)
+  def currentPatch():ActorRef = {
+    val position = data.getPosition
+    world.patchAt(position._1, position._2)
   }
 
-  def snapshot():AgentSnapshot = {
-    new AgentSnapshot(this.getClass.toString(), x.single.get, y.single.get, junkRef.single.get, self)
+  def getProperty(key:String): Any = {
+    data.getProperty(key)
   }
 
-  def currentPatch():PatchSnapshot = {
-    try{
-      worldSnapshot.patches(x.single.get.toInt)(y.single.get.toInt)
-    } catch {
-      case _ => {
-        println("Exception at " + x.single.get + ", " + y.single.get + "patches width = " + worldSnapshot.patches.length + " height = "+ worldSnapshot.patches(0).length)
-        currentPatch()
-      }
-    }
+  def setProperty(key:String, value:Any) = {
+    data.setProperty(key, value)
   }
 
-  def getJunk(key:Any): Any = {
-    junkRef.single().get(key)
-  }
-
-  def setJunk(key:Any, value:Any): Unit = {
-    junkRef.single() = junkRef.single() + (key -> value)
-  }
-
-  def getOtherAgentsInVicinity(radius: Int): List[AgentSnapshot] = {
-    val patches = worldSnapshot.patchSnapshotsWithinRange(x.single(), y.single(), radius)
-
-    val everyone = patches.foldLeft(List[AgentSnapshot]())((l, r) => getAgentsForPatchSnapshot(r) ::: l)
+  def getOtherAgentsInVicinity(radius: Int): List[ActorRef] = {
+    val position = data.getPosition()
+    //val patches = worldSnapshot.patchSnapshotsWithinRange(x.single(), y.single(), radius)
+    val patches = world.patchRefsWithinRange(position._1, position._2, radius)
+    val everyone = patches.foldLeft(List[ActorRef]())((l, r) => getAgentsForPatchRef(r) ::: l)
     everyone.filter( a => a != self)
   }
 
   def getAgentsOnMyPatch() = {
-    getAgentsForPatchSnapshot(currentPatch())
+    getAgentsForPatchRef(currentPatch())
   }
 
-  def getAgentsForPatchSnapshot(patchSnapshot:PatchSnapshot) = {
-    patchSnapshot.agentSnapshots
+  def getAgentsForPatchRef(patchRef:ActorRef) = {
+    world.getActorData(patchRef.path).getProperty("agentRefs").asInstanceOf[Ref[Vector[ActorRef]]].single.get.toList
   }
 
-  def killAgent(agent:AgentSnapshot):Unit = {
-    killAgent(agent.agentRef)
-  }
-
-  def killAgent(agentRef: ActorRef):Unit = {
-    world.manager ! KillAgent(self, agentRef)
+  def killAgent(otherAgent: ActorRef):Boolean = atomic { implicit txn =>
+    try {
+      val otherAgentData = world.getActorData(otherAgent.path)
+      if (!otherAgentData.isDead) {
+        otherAgentData.die
+        otherAgent ! Die
+        true
+      }else{
+        false
+      }
+    } catch {
+      case ex:NoSuchElementException => false
+    }
   }
 
 }

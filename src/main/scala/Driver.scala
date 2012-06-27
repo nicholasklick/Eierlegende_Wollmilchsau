@@ -9,7 +9,7 @@ object Driver {
   val system = ActorSystem("DriverSystem")
 
   print("Spawning world...")
-  val world = new World(1000, 1000)
+  val world = new World(100, 100)
   println("...done")
 
 
@@ -25,7 +25,7 @@ object Driver {
     // }
 	print("Spawning starter agents...")
     for (i <- 0 until world.width * world.height / 2) {
-      val dude = system.actorOf(Props(new CirclerAgent(world)).withDispatcher("kill-prioritizer"))
+      val dude = system.actorOf(Props(new MurderousSpacerAgent(world)).withDispatcher("kill-prioritizer"))
       world.manager ! AddAgent(dude)
     }
 	println("...done")

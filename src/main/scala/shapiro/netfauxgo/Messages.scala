@@ -12,20 +12,14 @@ case class AgentLeft(val agent:ActorRef)
 
 case class AgentEntered(val agent:ActorRef)
 
-case class Tick(val snapshot:WorldSnapshot)
+case object Tick
 
-case class TickAgents(val snapshot:WorldSnapshot)
-
-case class TickComplete(val snapshot:AgentSnapshot)
+case class TickComplete(val agent:ActorRef)
 
 case object FetchAgentRefs
 
 case class AgentsForPatch(val agentRefs:List[ActorRef])
 
-case class KillSucceeded(val target:ActorRef, val deadGuyState:Map[Any,Any])
+case class AgentDied(val agent:ActorRef)
 
-case class PatchSnapshotM(val pS:PatchSnapshot)
-
-case class AgentSnapshotM(val aS:AgentSnapshot)
-
-case object SnapshotRequest
+case object Die
