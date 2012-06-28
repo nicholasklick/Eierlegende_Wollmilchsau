@@ -22,7 +22,14 @@ class Spacer < MovableAgent
   end
   
   def tick
-    wiggle if get_other_agents_in_vicinity(1).length > 1
+    nearby_agents = get_other_agents_in_vicinity 1
+    wiggle if nearby_agents.length > 1
+
+    ##How to query another dude's biz
+    # if nearby_agents.length > 1
+    #   other_x = get_actor_position(nearby_agents.first)._1
+    #   puts "nearby guy has x = #{other_x}"
+    # end
   end
   
   def wiggle
@@ -31,7 +38,11 @@ class Spacer < MovableAgent
   end
 end
 
+puts "Spawning agents"
 (world.width * world.height / 2).times do
-  circler_actor = actor_system.actor_of(Props.create { Spacer.new world })
-  world.manager.tell AddAgent.new circler_actor
+  #print "."  #We should switch this to using the progress bar thing soon.
+  new_actor = actor_system.actor_of(Props.create { Spacer.new world })
+  world.manager.tell AddAgent.new new_actor
 end
+
+Driver.start_ticking

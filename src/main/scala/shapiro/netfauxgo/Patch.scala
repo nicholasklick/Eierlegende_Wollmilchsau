@@ -56,5 +56,34 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
       }
   }
 
+  def getProperty(key:String): Any = {
+    data.getProperty(key)
+  }
+
+  def setProperty(key:String, value:Any) = {
+    data.setProperty(key, value)
+  }
+
+  def getActorProperty(otherActor:ActorRef, property:String) = {
+    world.getActorData(otherActor.path).getProperty(property)
+  }
+
+  def setActorProperty(otherActor:ActorRef, property:String, value:Any) = {
+    world.getActorData(otherActor.path).setProperty(property, value)
+  }
+
+  def getActorPosition(otherActor:ActorRef) = {
+    world.getActorData(otherActor.path).getPosition()
+  }
+
+  def setActorPosition(otherActor:ActorRef, x:Double, y:Double) = {
+    world.getActorData(otherActor.path).setPosition(x, y)
+  }
+
+  def getActorClass(otherActor:ActorRef) = {
+    world.getActorData(otherActor.path).klass
+  }
+
+
 }
 

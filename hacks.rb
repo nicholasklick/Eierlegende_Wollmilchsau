@@ -1,5 +1,6 @@
 require 'java'
 java_import 'akka.actor.Props'
+java_import 'akka.actor.ActorRef'
 java_import 'shapiro.netfauxgo.Agent'
 
 
@@ -18,24 +19,48 @@ class Props
   end
 end
 
-module JunkStorage
+module DataStorage
   def method_missing(name, *args)
     name_string = name.to_s
     if name_string.end_with? "="
       if args.length == 1
-        self.set_junk(name_string.slice(0, name_string.length - 1), args.first)
+        self.set_property(name_string.slice(0, name_string.length - 1), args.first)
       else raise "Value to set missing"
       end
     else
-      self.get_junk(name_string).get
+      self.get_property(name_string).get
     end
-  end
+  end  
 end
 
+
 class Agent
-  include JunkStorage
+  include DataStorage
 end
 
 class Patch
-  include JunkStorage
+  include DataStorage
+end
+
+class ActorRef
+  
+  #the below are all commented out because I'm not sure yet how to get the world that corresponds to an ActorRef. 
+  
+  # def x
+  #   actor_data = world.get_actor_data(self.path)
+  #   actor_data.get_position[0]
+  # end
+  
+  # def method_missing(name, *args)  #be able to seamlessly look up the properties of other agents
+  #   name_string = name.to_s
+  #   actor_data = world.get_actor_data(self.path)
+  #   if name_string.end_with? "="
+  #     if args.length == 1
+  #       actor_data.set_property(name_string.slice(0, name_string.length - 1), args.first)
+  #     else raise "Value to set missing"
+  #     end
+  #   else
+  #     actor_data.get_property(name_string).get
+  #   end
+  # end
 end
