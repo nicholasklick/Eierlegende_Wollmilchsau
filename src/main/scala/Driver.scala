@@ -9,7 +9,7 @@ object Driver {
   val system = ActorSystem("DriverSystem")
 
   print("Spawning world...")
-  val world = new World(50, 50)
+  val world = new World(1000, 1000)
   println("...done")
 
 

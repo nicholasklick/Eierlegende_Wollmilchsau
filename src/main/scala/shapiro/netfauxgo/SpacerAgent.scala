@@ -15,8 +15,4 @@ class SpacerAgent(world: World) extends MovableAgent(world) {
     forward(5 * scala.math.random)
     turn_right(-10 + 20 * scala.math.random)
   }
-
-  def killSucceeded(deadGuy:ActorRef, state:Map[_, _]):Unit ={
-    //println("I pity the foo! " + deadGuy)
-  }
 }
