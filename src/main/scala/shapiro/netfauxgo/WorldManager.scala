@@ -20,8 +20,6 @@ class WorldManager(val world: World) extends Actor {
 
   private var readyForNewTick = true
 
-  private var deadPool = makeNewDeadpool()  // these guys have been killed this tick, and should be removed from the database and the list of critters to tick
-
   var startTime = System.nanoTime()
 
   def tick() = {
@@ -66,9 +64,6 @@ class WorldManager(val world: World) extends Actor {
         finishTick
       }
     }
-  }
-  def makeNewDeadpool():TMap[ActorRef, KillAgent] = {
-    TMap[ActorRef, KillAgent]()
   }
 
 

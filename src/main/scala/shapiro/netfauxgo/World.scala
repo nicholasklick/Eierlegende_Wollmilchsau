@@ -6,12 +6,13 @@ import concurrent.stm.TMap
 import akka.dispatch.Await
 
 
-class World(val width: Int, val height: Int) {
+class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
   private val system = ActorSystem("MySystem")
   private val actorData = TMap.empty[ActorPath, ActorData]
 
   private val grid = Array.tabulate(width, height) {
-    (x, y) => system.actorOf(Props(new Patch(this, x, y)))
+    //new Patch(this, x, y)
+    (x, y) => system.actorOf(Props(patchSpawner.spawnPatch(this, x, y)))
   }
 
   val manager = system.actorOf(Props(new WorldManager(this) ))

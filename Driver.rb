@@ -4,10 +4,21 @@ require 'hacks'
 java_import 'akka.actor.ActorSystem'
 java_import 'shapiro.netfauxgo.AddAgent'
 java_import 'shapiro.netfauxgo.MovableAgent'
+java_import 'shapiro.netfauxgo.PatchSpawner'
+java_import 'shapiro.netfauxgo.Patch'
+java_import 'Driver'  
 
-java_import 'Driver'   #this will spawn a world
-world = Driver.world
-actor_system = Driver.system
+
+class DefaultPatchSpawnerInRuby < PatchSpawner
+  def spawnPatch(world, x, y)
+    Patch.new(world, x, y)
+  end
+end
+
+patchSpawner = DefaultPatchSpawnerInRuby.new
+driver = Driver.new(100, 100, patchSpawner)
+world = driver.world
+actor_system = driver.system
 
 class Circler < MovableAgent
   def tick
@@ -45,4 +56,4 @@ puts "Spawning agents"
   world.manager.tell AddAgent.new new_actor
 end
 
-Driver.start_ticking
+driver.start_ticking

@@ -4,6 +4,7 @@
       <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-library.jar!/" />
       <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-swing.jar!/" />
       <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-dbc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../libs/sbt-base/scala-library.jar!/" />
     </CLASSES>
     <JAVADOC>
       <root url="file://$PROJECT_DIR$/../libs/scala-2.9.2/doc/scala-devel-docs/api" />

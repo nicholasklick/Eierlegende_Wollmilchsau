@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="scala-compiler">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-compiler.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-library.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../libs/sbt-base/scala-compiler.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../libs/sbt-base/scala-library.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
