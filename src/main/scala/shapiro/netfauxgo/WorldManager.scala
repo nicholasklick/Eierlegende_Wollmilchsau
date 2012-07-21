@@ -16,6 +16,8 @@ class WorldManager(val world: World) extends Actor {
   private var outstandingCritters = Set[ActorRef]()
   private var agentCount = 0       //how many agents we ticked in this pass.
 
+  private var patchesOutstanding = 0
+
   private var tickNumber = 1
 
   private var readyForNewTick = true
@@ -64,6 +66,12 @@ class WorldManager(val world: World) extends Actor {
         finishTick
       }
     }
+
+    case PatchTickComplete => {
+      patchesOutstanding -= 1
+      if (0 == patchesOutstanding)
+        patchesDoneTicking
+    }
   }
 
 
@@ -71,9 +79,25 @@ class WorldManager(val world: World) extends Actor {
     val endTime = System.nanoTime()
     val elapsedTime = endTime - startTime
     println("\t" + elapsedTime / 1E9 + " seconds \t\t" + agentCount + " agents")
-    readyForNewTick = true
+    tickPatches
   }
 
+  def tickPatches() = {
+    startTime = System.nanoTime()
+    patchesOutstanding = world.width * world.height
+    for (x <- 0.until(world.width )) {
+      for (y <- 0.until(world.height)) {
+        world.patchAt(x, y) ! Tick
+      }
+    }
+  }
+
+  def patchesDoneTicking() = {
+    val endTime = System.nanoTime()
+    val elapsedTime = endTime - startTime
+    println("\t" + elapsedTime / 1E9 + " seconds for patches")
+    readyForNewTick = true
+  }
 }
 
 

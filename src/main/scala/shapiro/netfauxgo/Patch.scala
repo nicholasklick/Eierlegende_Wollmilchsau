@@ -54,6 +54,22 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
           sender ! AgentsForPatch(agentRefs.get.toList)
         }
       }
+    case Tick =>
+      doTick
+  }
+
+  def doTick() = {
+    atomic {
+      implicit txn =>
+        if (!data.isDead()){
+          tick
+          world.manager ! PatchTickComplete
+        }
+    }
+  }
+
+  def tick() = {
+
   }
 
   def getProperty(key:String): Any = {

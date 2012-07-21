@@ -23,3 +23,5 @@ case class AgentsForPatch(val agentRefs:List[ActorRef])
 case class AgentDied(val agent:ActorRef)
 
 case object Die
+
+case object PatchTickComplete
