@@ -1,1 +1,2 @@
-rvm use jruby-1.6.7
+export CLASSPATH=$CLASSPATH:`pwd`/target/netfauxgo-assembly-0.01.jar
+rvm use jruby-1.6.7.2
