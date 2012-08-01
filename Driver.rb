@@ -39,14 +39,27 @@ class MartenPatch < Patch
     super
 
     self.vole_population = 0
+    self.marten = nil
+    self.marten_scent_age = nil
   end
 
   def tick
     grow_vole_population
+    smelly_stuff
   end
 
   def grow_vole_population
     self.vole_population *= 1.01
+  end
+
+  def smelly_stuff
+    unless self.marten_scent_age.nil?
+      self.marten_scent_age += 1
+      if self.marten_scent_age > 14
+        self.marten_scent_age = nil
+        self.marten = nil
+      end
+    end
   end
 end
 
