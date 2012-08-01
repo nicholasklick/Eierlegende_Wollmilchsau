@@ -7,7 +7,7 @@ import akka.dispatch.Await
 
 
 class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
-  private val system = ActorSystem("MySystem")
+  val system = ActorSystem("MySystem")
   private val actorData = TMap.empty[ActorPath, ActorData]
 
   private val grid = Array.tabulate(width, height) {

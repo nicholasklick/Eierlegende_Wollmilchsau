@@ -8,6 +8,14 @@ java_import 'shapiro.netfauxgo.PatchSpawner'
 java_import 'shapiro.netfauxgo.Patch'
 java_import 'Driver'  
 
+# TODO
+# * landcover
+# * import
+# * map render
+# * decide movement based on neighborhood patches
+# * reproduce
+# * die
+
 class MartenPatch < Patch
   # use hacks.rb set/get property
   def vole_population
@@ -70,7 +78,7 @@ class DefaultPatchSpawnerInRuby < PatchSpawner
 end
 
 patchSpawner = DefaultPatchSpawnerInRuby.new
-driver = Driver.new(100, 100, patchSpawner)
+driver = Driver.new(1353, 714, patchSpawner)
 world = driver.world
 actor_system = driver.system
 
@@ -115,9 +123,14 @@ class Marten < MovableAgent
   end
 
   def die_now
+    die if rand > 0.98
   end
 
   def have_babies
+    if rand > 0.98
+      new_actor = world.system.actor_of(Props.create { Marten.new world })
+      world.manager.tell AddAgent.new new_actor
+    end
   end
 end
 
@@ -151,8 +164,7 @@ class Spacer < MovableAgent
 end
 
 puts "Spawning agents"
-(world.width * world.height / 2).times do
-  #print "."  #We should switch this to using the progress bar thing soon.
+200.times do
   new_actor = actor_system.actor_of(Props.create { Marten.new world })
   world.manager.tell AddAgent.new new_actor
 end
