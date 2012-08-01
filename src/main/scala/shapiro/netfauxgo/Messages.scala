@@ -25,3 +25,5 @@ case class AgentDied(val agent:ActorRef)
 case object Die
 
 case object PatchTickComplete
+
+case class RegisterTickReporter(val tickReporter:TickReporter)

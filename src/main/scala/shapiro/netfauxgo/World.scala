@@ -1,8 +1,7 @@
 package shapiro.netfauxgo
 
 import akka.actor._
-import concurrent.stm.TSet
-import concurrent.stm.TMap
+import concurrent.stm._
 import akka.dispatch.Await
 
 
@@ -54,6 +53,15 @@ class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
       }
     }
     ret
+  }
+
+  def getActorDataSnapshot() = {
+    atomic {
+      implicit txn =>
+        val snapshot = TMap.empty[ActorPath, ActorData]
+        actorData.foreach( (t2) => snapshot.put(t2._1, t2._2.clone))
+        snapshot
+    }
   }
 }
 

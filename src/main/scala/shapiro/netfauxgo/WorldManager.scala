@@ -7,8 +7,6 @@ import akka.util.duration._
 import akka.pattern.ask
 import akka.util.Timeout
 
-
-
 class WorldManager(val world: World) extends Actor {
   private val system = ActorSystem("MySystem")
 
@@ -21,6 +19,8 @@ class WorldManager(val world: World) extends Actor {
   private var tickNumber = 1
 
   private var readyForNewTick = true
+
+  private var tickReporters = List[TickReporter]()
 
   var startTime = System.nanoTime()
 
@@ -72,6 +72,10 @@ class WorldManager(val world: World) extends Actor {
       if (0 == patchesOutstanding)
         patchesDoneTicking
     }
+
+    case RegisterTickReporter(tickReporter) => {
+      tickReporters = tickReporter :: tickReporters
+    }
   }
 
 
@@ -96,6 +100,8 @@ class WorldManager(val world: World) extends Actor {
     val endTime = System.nanoTime()
     val elapsedTime = endTime - startTime
     println("\t" + elapsedTime / 1E9 + " seconds for patches")
+    val snapshot = world.getActorDataSnapshot()
+    tickReporters.foreach( (reporter) => reporter.tickComplete(snapshot))
     readyForNewTick = true
   }
 }
