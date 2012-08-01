@@ -100,8 +100,10 @@ class WorldManager(val world: World) extends Actor {
     val endTime = System.nanoTime()
     val elapsedTime = endTime - startTime
     println("\t" + elapsedTime / 1E9 + " seconds for patches")
-    val snapshot = world.getActorDataSnapshot()
-    tickReporters.foreach( (reporter) => reporter.tickComplete(snapshot))
+    if (tickReporters.length > 0) {
+      val snapshot = world.getActorDataSnapshot()
+      tickReporters.foreach( (reporter) => reporter.tickComplete(snapshot))
+    }
     readyForNewTick = true
   }
 }
