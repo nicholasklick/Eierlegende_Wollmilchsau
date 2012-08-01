@@ -4,7 +4,7 @@ import concurrent.stm._
 import akka.actor.ActorRef
 
 class ActorData(val actor: ActorRef, val klass:String) {
-  private val stuff = TMap.empty[String,Any]
+  private var stuff = TMap.empty[String,Any]
   private val x = Ref[Double](0)
   private val y = Ref[Double](0)
   private val dead = Ref(false)
@@ -46,5 +46,14 @@ class ActorData(val actor: ActorRef, val klass:String) {
 
   def isDead() = {
     dead.single.get
+  }
+
+  override def clone():ActorData = atomic { implicit txn =>
+    val theClone = new ActorData(actor, klass)
+    theClone.x.set(x.get)
+    theClone.y.set(y.get)
+    theClone.dead.set(dead.get)
+    theClone.stuff = stuff.clone
+    theClone
   }
 }

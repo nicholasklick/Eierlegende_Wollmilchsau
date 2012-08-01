@@ -9,7 +9,4 @@ class CirclerAgent(world: World) extends MovableAgent(world) {
     turn_right(1)
   }
 
-  def killSucceeded(deadGuy:ActorRef, state:Map[_, _]):Unit ={
-    println("I pity the foo! " + deadGuy)
-  }
 }

@@ -21,7 +21,8 @@ class Driver(val width:Int, val height:Int, val patchSpawner:PatchSpawner) {
 }
 
 object DefaultDriver {
-  val driver = new Driver(100, 100, new DefaultPatchSpawner())
+  val driver = new Driver(500, 500, new DefaultPatchSpawner())
+  driver.world.manager ! RegisterTickReporter(new DefaultTickReporter())
 
   def main(args: Array[String]): Unit = {
     print("Spawning starter agents...")
