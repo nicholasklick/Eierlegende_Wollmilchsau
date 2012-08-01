@@ -8,10 +8,51 @@ java_import 'shapiro.netfauxgo.PatchSpawner'
 java_import 'shapiro.netfauxgo.Patch'
 java_import 'Driver'  
 
+class MartenPatch < Patch
+  # use hacks.rb set/get property
+  def vole_population
+    get_property 'vole_population'
+  end
+
+  def vole_population=(value)
+    set_property 'vole_population', value
+  end
+
+  def marten
+    get_property 'marten'
+  end
+
+  def marten=(value)
+    set_property 'marten', value
+  end
+
+  def marten_scent_age
+    get_property 'marten_scent_age'
+  end
+
+  def marten_scent_age=(value)
+    set_property 'marten_scent_age', value
+  end
+
+
+  def initialize(world, x, y)
+    super
+
+    self.vole_population = 0
+  end
+
+  def tick
+    grow_vole_population
+  end
+
+  def grow_vole_population
+    self.vole_population *= 1.01
+  end
+end
 
 class DefaultPatchSpawnerInRuby < PatchSpawner
   def spawnPatch(world, x, y)
-    Patch.new(world, x, y)
+    MartenPatch.new(world, x, y)
   end
 end
 
@@ -19,6 +60,53 @@ patchSpawner = DefaultPatchSpawnerInRuby.new
 driver = Driver.new(100, 100, patchSpawner)
 world = driver.world
 actor_system = driver.system
+
+class Marten < MovableAgent
+  def initialize(*args)
+    super
+  end
+
+  def tick
+    # do it
+    eat_all_the_voles
+    go_to_that_place
+    leave_your_paw_smells
+    die_now
+    have_babies
+  end
+
+
+  def eat_all_the_voles
+    patch = current_patch
+    population = get_actor_property patch, 'vole_population'
+    population *= 0.75
+    set_actor_property patch, 'vole_population', population
+  end
+
+
+  def go_to_that_place
+    patches = getPatchesInNeighborhood(1)
+    # not using it to decide direction just yet
+    #patches.for_each do |patch|
+    #  get_actor_property patch, 'marten'
+    #end
+
+    turn_right rand(360)
+    forward 1
+  end
+
+  def leave_your_paw_smells
+    patch = current_patch
+    set_actor_property patch, 'marten', self
+    set_actor_property patch, 'marten_scent_age', 0
+  end
+
+  def die_now
+  end
+
+  def have_babies
+  end
+end
 
 class Circler < MovableAgent
   def tick
@@ -52,7 +140,7 @@ end
 puts "Spawning agents"
 (world.width * world.height / 2).times do
   #print "."  #We should switch this to using the progress bar thing soon.
-  new_actor = actor_system.actor_of(Props.create { Spacer.new world })
+  new_actor = actor_system.actor_of(Props.create { Marten.new world })
   world.manager.tell AddAgent.new new_actor
 end
 

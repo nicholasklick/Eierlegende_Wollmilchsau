@@ -100,6 +100,11 @@ abstract class Agent(val world: World) extends Actor {
     everyone.filter( a => a != self)
   }
 
+  def getPatchesInNeighborhood(radius: Int): List[ActorRef] = {
+    val position = data.getPosition()
+    world.patchRefsWithinRange(position._1, position._2, radius)
+  }
+
   def getAgentsOnMyPatch() = {
     getAgentsForPatchRef(currentPatch())
   }
