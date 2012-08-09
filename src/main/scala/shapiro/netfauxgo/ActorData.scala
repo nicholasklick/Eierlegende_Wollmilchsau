@@ -2,9 +2,10 @@ package shapiro.netfauxgo
 
 import concurrent.stm._
 import akka.actor.ActorRef
+import scala.collection.mutable.{Map, SynchronizedMap, HashMap}
 
 class ActorData(val actor: ActorRef, val klass:String) {
-  private var stuff = TMap.empty[String,Any]
+  protected[ActorData] var stuff = new HashMap[String, Any] with SynchronizedMap[String, Any]
   private val x = Ref[Double](0)
   private val y = Ref[Double](0)
   private val dead = Ref(false)
@@ -31,13 +32,13 @@ class ActorData(val actor: ActorRef, val klass:String) {
   }
 
   def setProperty(key:String, value:Any) = {
-    stuff.single += (key -> value)
+    stuff += (key -> value)
 //    if (key == "heading")
 //      println(actor.toString + " set property " + key + " = " + value)
   }
 
   def getProperty(key:String) = {
-    stuff.single(key)
+    stuff(key)
   }
 
   def die() = {
@@ -53,7 +54,7 @@ class ActorData(val actor: ActorRef, val klass:String) {
     theClone.x.set(x.get)
     theClone.y.set(y.get)
     theClone.dead.set(dead.get)
-    theClone.stuff = stuff.clone
+    theClone.stuff ++= stuff
     theClone
   }
 }

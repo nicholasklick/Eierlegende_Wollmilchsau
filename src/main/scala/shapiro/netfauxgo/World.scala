@@ -3,12 +3,12 @@ package shapiro.netfauxgo
 import akka.actor._
 import concurrent.stm._
 import akka.dispatch.Await
+import collection.mutable.{SynchronizedMap, HashMap}
 
 
 class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
   val system = ActorSystem("MySystem")
-  private val actorData = TMap.empty[ActorPath, ActorData]
-
+  private val actorData = new HashMap[ActorPath, ActorData] with SynchronizedMap[ActorPath, ActorData]
   private val grid = Array.tabulate(width, height) {
     //new Patch(this, x, y)
     (x, y) => system.actorOf(Props(patchSpawner.spawnPatch(this, x, y)))
@@ -27,15 +27,15 @@ class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
   }
 
   def registerActorData(uuid: ActorPath, ad:ActorData) = {
-    actorData.single += (uuid -> ad)
+    actorData += (uuid -> ad)
   }
 
   def getActorData(uuid: ActorPath) = {
-    actorData.single(uuid)
+    actorData(uuid)
   }
 
   def unregisterActorData(uuid: ActorPath) = {
-    actorData.single -= uuid
+    actorData -= uuid
   }
 
   def patchRefsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {

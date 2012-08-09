@@ -7,6 +7,13 @@
         <option name="compilerLibraryName" value="scala-compiler" />
       </configuration>
     </facet>
+    <facet type="JRUBY" name="JRuby">
+      <configuration>
+        <JRUBY_FACET_CONFIG_ID NAME="JRUBY_SDK_NAME" VALUE="RVM: jruby-1.6.7.2" />
+        <LOAD_PATH number="0" />
+        <I18N_FOLDERS number="0" />
+      </configuration>
+    </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
@@ -17,6 +24,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="scala-library" level="project" />
     <orderEntry type="library" exported="" name="akka basics" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="RVM: jruby-1.6.7.2 facet library" level="application" />
   </component>
 </module>
 
