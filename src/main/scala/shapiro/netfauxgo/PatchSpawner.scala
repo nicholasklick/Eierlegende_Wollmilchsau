@@ -9,3 +9,4 @@ class DefaultPatchSpawner extends PatchSpawner {
 		new Patch(world, x, y)
 	}
 }
+

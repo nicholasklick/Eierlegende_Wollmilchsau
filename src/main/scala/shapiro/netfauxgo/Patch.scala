@@ -63,9 +63,9 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
       implicit txn =>
         if (!data.isDead()){
           tick
-          world.manager ! PatchTickComplete
         }
     }
+    world.manager ! PatchTickComplete
   }
 
   def tick() = {

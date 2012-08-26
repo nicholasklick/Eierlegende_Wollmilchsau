@@ -2,8 +2,7 @@ import AssemblyKeys._  // so that we can make a jar with all the things
 
 assemblySettings
 
-
-name := "netfauxgo"
+name := "Eierlegende Wollmilchsau"
 
 version := "0.01"
 

@@ -5,6 +5,7 @@ import akka.util.duration._
 import akka.actor.Scheduler
 import akka.actor.ActorSystem
 import shapiro.netfauxgo._
+import shapiro.netfauxgo.samplecritters.{VolePatchSpawner, MartenAgent}
 
 class Driver(val width:Int, val height:Int, val patchSpawner:PatchSpawner) {
   val system = ActorSystem("DriverSystem")
@@ -21,15 +22,17 @@ class Driver(val width:Int, val height:Int, val patchSpawner:PatchSpawner) {
 }
 
 object DefaultDriver {
-  val driver = new Driver(500, 500, new DefaultPatchSpawner())
+  val driver = new Driver(1353, 714, new VolePatchSpawner())
   driver.world.manager ! RegisterTickReporter(new DefaultTickReporter())
 
   def main(args: Array[String]): Unit = {
     print("Spawning starter agents...")
-    for (i <- 0 until driver.world.width * driver.world.height / 2) {
-      val dude = driver.system.actorOf(Props(new MurderousSpacerAgent(driver.world)).withDispatcher("kill-prioritizer"))
-      driver.world.manager ! AddAgent(dude)
-    }
+    //for (i <- 0 until driver.world.width * driver.world.height / 2) {
+
+	for (i <- 0 until 200) {
+	  val dude = driver.system.actorOf(Props(new MartenAgent(driver.world)))
+	  driver.world.manager ! AddAgent(dude)
+	}
     println("...done")
 
     driver.startTicking()
