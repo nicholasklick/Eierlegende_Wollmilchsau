@@ -1,3 +1,4 @@
+#require 'database_magic'
 require 'java'
 
 require 'hacks'
@@ -41,14 +42,26 @@ class MartenPatch < Patch
   def marten_scent_age=(value)
     set_property 'marten_scent_age', value
   end
+  
+  def tree_density
+    get_property 'tree_density'
+  end
+  
+  def tree_density=(value)
+    set_property 'tree_density', value
+  end
 
 
   def initialize(world, x, y)
     super
-
+    
+    #correspondent = ResourceTile.where(:world_id => @@db_world_id, :x => x, :y => y).first
+    
+    #self.tree_density = correspondent.tree_density
     self.vole_population = 0
     self.marten = nil
     self.marten_scent_age = nil
+    #puts "Patch (#{self.object_id}) initialized with correspondent (#{correspondent.id}) tree_density #{self.tree_density}"
   end
 
   def tick
@@ -78,7 +91,13 @@ class DefaultPatchSpawnerInRuby < PatchSpawner
 end
 
 patchSpawner = DefaultPatchSpawnerInRuby.new
-driver = Driver.new(1353, 714, patchSpawner)
+@@db_world_id = ARGV.first.to_i
+
+puts "Using World ID #{@@db_world_id}"
+#@@db_world = World.find @@db_world_id
+
+#driver = Driver.new(@@db_world.width, @@db_world.height, patchSpawner)
+driver = Driver.new(128, 128, patchSpawner)
 world = driver.world
 actor_system = driver.system
 

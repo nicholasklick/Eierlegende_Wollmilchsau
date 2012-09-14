@@ -1,0 +1,3 @@
+[submodule "Trails-Forward-server"]
+	path = Trails-Forward-server
+	url = git://github.com/wids-eria/Trails-Forward-server.git
