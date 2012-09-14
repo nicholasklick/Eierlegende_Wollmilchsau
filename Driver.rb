@@ -1,4 +1,4 @@
-#require 'database_magic'
+require 'database_magic'
 require 'java'
 
 require 'hacks'
@@ -52,12 +52,12 @@ class MartenPatch < Patch
   end
 
 
-  def initialize(world, x, y)
-    super
+  def initialize(world, world_id, x, y)
+    super world, x, y
     
-    #correspondent = ResourceTile.where(:world_id => @@db_world_id, :x => x, :y => y).first
+    correspondent = ResourceTile.where(:world_id => world_id, :x => x, :y => y).first
     
-    #self.tree_density = correspondent.tree_density
+    self.tree_density = correspondent.tree_density
     self.vole_population = 0
     self.marten = nil
     self.marten_scent_age = nil
@@ -85,19 +85,23 @@ class MartenPatch < Patch
 end
 
 class DefaultPatchSpawnerInRuby < PatchSpawner
+  def initialize(world_id)
+    super() #parens needed!
+    @world_id = world_id
+  end
+  
   def spawnPatch(world, x, y)
-    MartenPatch.new(world, x, y)
+    MartenPatch.new(world, @world_id, x, y)
   end
 end
 
-patchSpawner = DefaultPatchSpawnerInRuby.new
-@@db_world_id = ARGV.first.to_i
+db_world_id = ARGV.first.to_i
 
-puts "Using World ID #{@@db_world_id}"
-#@@db_world = World.find @@db_world_id
+puts "Using World ID #{db_world_id}"
+db_world = World.find db_world_id
 
-#driver = Driver.new(@@db_world.width, @@db_world.height, patchSpawner)
-driver = Driver.new(128, 128, patchSpawner)
+patchSpawner = DefaultPatchSpawnerInRuby.new(db_world_id)
+driver = Driver.new(db_world.width, db_world.height, patchSpawner)
 world = driver.world
 actor_system = driver.system
 
@@ -189,3 +193,4 @@ puts "Spawning agents"
 end
 
 driver.start_ticking
+actor_system.await_termination
