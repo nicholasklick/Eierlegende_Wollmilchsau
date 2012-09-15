@@ -2,7 +2,8 @@ require 'java'
 java_import 'akka.actor.Props'
 java_import 'akka.actor.ActorRef'
 java_import 'shapiro.netfauxgo.Agent'
-
+java_import 'shapiro.netfauxgo.Patch'
+java_import 'shapiro.netfauxgo.MovableAgent'
 
 class Props
   def self.[](*args, &block)
@@ -20,26 +21,58 @@ class Props
 end
 
 module DataStorage
-  def method_missing(name, *args)
-    name_string = name.to_s
-    if name_string.end_with? "="
-      if args.length == 1
-        self.set_property(name_string.slice(0, name_string.length - 1), args.first)
-      else raise "Value to set missing"
+  def self.included(base)
+    base.extend ClassMethods
+  end
+  
+  module ClassMethods
+    def stm_attr_accessor(*args)
+      args.each do |arg|
+        send :define_method, arg.to_s do
+          get_property arg.to_s
+        end
+        
+        send :define_method, (arg.to_s + "=") do |new_value|
+          set_property arg.to_s, new_value
+        end
       end
-    else
-      self.get_property(name_string).get
     end
-  end  
+  end
+end
+
+module DatabaseSync
+  def self.included(base)
+    base.extend ClassMethods
+  end
+  
+  module ClassMethods    
+    def sync_fields(*args)
+      @fields_to_sync ||= [] 
+      @fields_to_sync += args
+    end
+  end
+  
+  def sync_db_data
+    self.class.instance_variable_get(:@fields_to_sync).each do |field|
+      @sync_correspondent.send("#{field}=", get_property(field.to_s))
+    end
+    @sync_correspondent.save!
+  end
+  
+  def use_correspondent(correspondent)
+    @sync_correspondent = correspondent
+  end
 end
 
 
-class Agent
+class RubyMovableAgent < MovableAgent
   include DataStorage
+  include DatabaseSync
 end
 
-class Patch
+class RubyPatch < Patch
   include DataStorage
+  include DatabaseSync
 end
 
 class ActorRef
