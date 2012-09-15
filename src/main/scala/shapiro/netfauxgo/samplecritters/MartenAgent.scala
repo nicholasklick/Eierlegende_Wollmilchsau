@@ -8,9 +8,9 @@ import akka.actor.Props
 class MartenAgent(world: World) extends MovableAgent(world) {
   def tick() = {
     eatSomeVoles
-	goToABetterPlace
-	leaveScent
-	if (!dieMaybe) reproduce
+	  goToABetterPlace
+	  leaveScent
+	  if (!dieMaybe) reproduce
   }
 
   def eatSomeVoles = {
@@ -29,8 +29,8 @@ class MartenAgent(world: World) extends MovableAgent(world) {
 
   def leaveScent = {
     val patch = currentPatch()
-	setActorProperty(patch, "smelliest_marten", self)
-	setActorProperty(patch, "marten_scent_age", 0)
+	  setActorProperty(patch, "smelliest_marten", self)
+	  setActorProperty(patch, "marten_scent_age", 0)
   }
 
   def dieMaybe = {
