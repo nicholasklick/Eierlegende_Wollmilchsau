@@ -40,29 +40,7 @@ module DataStorage
   end
 end
 
-module DatabaseSync
-  def self.included(base)
-    base.extend ClassMethods
-  end
-  
-  module ClassMethods    
-    def sync_fields(*args)
-      @fields_to_sync ||= [] 
-      @fields_to_sync += args
-    end
-  end
-  
-  def sync_db_data
-    self.class.instance_variable_get(:@fields_to_sync).each do |field|
-      @sync_correspondent.send("#{field}=", get_property(field.to_s))
-    end
-    @sync_correspondent.save!
-  end
-  
-  def use_correspondent(correspondent)
-    @sync_correspondent = correspondent
-  end
-end
+
 
 
 class RubyMovableAgent < MovableAgent

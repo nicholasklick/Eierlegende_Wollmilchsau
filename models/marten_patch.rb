@@ -6,18 +6,18 @@ class MartenPatch < RubyPatch
     super world, x, y
     correspondent = ResourceTile.where(:world_id => world_id, :x => x, :y => y).first
     use_correspondent correspondent
+    sync_from_db
     
-    self.tree_density = correspondent.tree_density
     self.vole_population = 0
     self.marten = nil
     self.marten_scent_age = nil
-    #puts "Patch (#{self.object_id}) initialized with correspondent (#{correspondent.id}) tree_density #{self.tree_density}"
+    #puts "Patch (#{self.object_id}) initialized with tree_density #{self.tree_density}"
   end
 
   def tick
     grow_vole_population
     smelly_stuff
-    #sync_db_data  #slow to do this here, better to use the reporter functionality
+    #sync_to_db  #slow to do this every tick
   end
 
   def grow_vole_population
