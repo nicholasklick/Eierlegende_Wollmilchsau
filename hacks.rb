@@ -40,20 +40,28 @@ module DataStorage
   end
 end
 
-
+module AgentSpawning
+  def spawn(klass)
+    new_actor = world.system.actor_of(Props.create { klass.new world })
+    world.manager.tell AddAgent.new new_actor
+    new_actor
+  end
+end
 
 
 class RubyMovableAgent < MovableAgent
   include DataStorage
   include DatabaseSync
+  include AgentSpawning
 end
 
 class RubyPatch < Patch
   include DataStorage
   include DatabaseSync
+  include AgentSpawning
 end
 
-class ActorRef
+#class ActorRef
   
   #the below are all commented out because I'm not sure yet how to get the world that corresponds to an ActorRef. 
   
@@ -74,4 +82,4 @@ class ActorRef
   #     actor_data.get_property(name_string).get
   #   end
   # end
-end
+#end

@@ -44,8 +44,7 @@ class Marten < RubyMovableAgent
 
   def have_babies
     if rand > 0.98
-      new_actor = world.system.actor_of(Props.create { Marten.new world })
-      world.manager.tell AddAgent.new new_actor
+      offspring = spawn Marten
     end
   end
 end
