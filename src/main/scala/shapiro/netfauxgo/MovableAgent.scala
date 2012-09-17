@@ -1,6 +1,7 @@
 package shapiro.netfauxgo
 
 import scala.concurrent.stm._
+import akka.actor.ActorRef
 
 abstract class MovableAgent(world: World) extends Agent(world) {
 
@@ -33,6 +34,14 @@ abstract class MovableAgent(world: World) extends Agent(world) {
     }
   }
 
+  def heading = {
+    data.getProperty("heading").asInstanceOf[Double]
+  }
+
+  def position = {
+    data.getPosition()
+  }
+
   def turn_right(degrees: Double) = {
     atomic {
       implicit txn =>
@@ -44,4 +53,21 @@ abstract class MovableAgent(world: World) extends Agent(world) {
   def turn_left(degrees: Double) = {
     turn_right(0 - degrees)
   }
+
+  def turn_toward(patch:ActorRef):Unit = {
+    turn_left(angle_toward(patch) )
+  }
+
+  def angle_toward(patch:ActorRef) = {
+    val patch_position = getActorPosition(patch)
+    val patch_x = patch_position._1
+    val patch_y = patch_position._2
+    val my_position = position
+    val my_x = my_position._1
+    val my_y = my_position._2
+
+    heading - (patch_y - my_y) / (patch_x - my_x)
+  }
+
+
 }

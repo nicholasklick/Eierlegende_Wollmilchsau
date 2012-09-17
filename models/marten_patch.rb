@@ -1,6 +1,17 @@
-class MartenPatch < RubyPatch  
-  stm_attr_accessor :vole_population, :marten, :marten_scent_age, :tree_density
-  sync_fields :tree_density
+class DeerMartenPatch < RubyPatch  
+  Tree_fields = [ :num_2_inch_diameter_trees, :num_4_inch_diameter_trees, 
+                  :num_6_inch_diameter_trees,  :num_8_inch_diameter_trees, 
+                  :num_10_inch_diameter_trees, :num_12_inch_diameter_trees, 
+                  :num_14_inch_diameter_trees, :num_16_inch_diameter_trees, 
+                  :num_18_inch_diameter_trees, :num_20_inch_diameter_trees, 
+                  :num_22_inch_diameter_trees, :num_24_inch_diameter_trees ]
+                  
+  Max_vole_population = 13.9
+                  
+  stm_attr_accessor :vole_population, :marten, :marten_scent_age, :tree_density, 
+                    :tree_type, *Tree_fields
+                    
+  sync_fields :tree_density, :tree_type, *Tree_fields
 
   def initialize(world, world_id, x, y)
     super world, x, y
@@ -8,10 +19,10 @@ class MartenPatch < RubyPatch
     use_correspondent correspondent
     sync_from_db
     
-    self.vole_population = 0
+    self.vole_population = Max_vole_population / 2
     self.marten = nil
     self.marten_scent_age = nil
-    #puts "Patch (#{self.object_id}) initialized with tree_density #{self.tree_density}"
+    #puts "Patch (#{self.object_id}) initialized with :num_14_inch_diameter_trees = #{num_14_inch_diameter_trees}" if num_14_inch_diameter_trees > 0
   end
 
   def tick

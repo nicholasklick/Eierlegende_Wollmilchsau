@@ -28,7 +28,7 @@ class DefaultPatchSpawnerInRuby < PatchSpawner
   end
   
   def spawnPatch(world, x, y)
-    MartenPatch.new(world, @world_id, x, y)
+    DeerMartenPatch.new(world, @world_id, x, y)
   end
 end
 
@@ -36,6 +36,7 @@ db_world_id = ARGV.first.to_i
 
 puts "Using World ID #{db_world_id}"
 db_world = World.find db_world_id
+puts "\t width = #{db_world.width}; height = #{db_world.height}"
 
 patchSpawner = DefaultPatchSpawnerInRuby.new(db_world_id)
 driver = Driver.new(db_world.width, db_world.height, patchSpawner)

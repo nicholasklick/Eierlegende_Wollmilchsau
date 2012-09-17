@@ -1,4 +1,6 @@
 require 'java'
+require 'jruby/scala_support'
+
 java_import 'akka.actor.Props'
 java_import 'akka.actor.ActorRef'
 java_import 'shapiro.netfauxgo.Agent'
@@ -53,6 +55,14 @@ class RubyMovableAgent < MovableAgent
   include DataStorage
   include DatabaseSync
   include AgentSpawning
+  
+  def get_patches_in_neighborhood(radius)
+    super(radius).from_scala
+  end
+  
+  def get_other_agents_in_vicinity(radius)
+    super(radius).from_scala
+  end
 end
 
 class RubyPatch < Patch

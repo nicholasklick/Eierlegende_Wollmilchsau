@@ -40,15 +40,17 @@ class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
 
   def patchRefsWithinRange(x_pos: Double, y_pos: Double, radius: Double): List[ActorRef] = {
     val x_min = if (x_pos - radius >= 0) x_pos - radius else 0
-    val x_max = if (x_pos + radius <= width) x_pos + radius else width
+    val x_max = if (x_pos + radius < width) x_pos + radius else width - 1
 
     val y_min = if (y_pos - radius >= 0) y_pos - radius else 0
-    val y_max = if (y_pos + radius <= height) y_pos + radius else height
+    val y_max = if (y_pos + radius < height) y_pos + radius else height - 1
+
+    //println("Looking for patches in range: x[" + x_min + " .. " + x_max + "] y[" + y_min + " .. " + y_max + "]")
 
     var ret = List[ActorRef]()
-    for (x <- x_min.round.until(x_max.round)) {
-      for (y <- y_min.round.until(y_max.round)) {
-        val thePatch = grid(x.toInt)(y.toInt)
+    for (x <- x_min.toInt.until(x_max.toInt + 1)) {
+      for (y <- y_min.toInt.until(y_max.toInt + 1)) {
+        val thePatch = grid(x)(y)
         ret = thePatch :: ret
       }
     }
