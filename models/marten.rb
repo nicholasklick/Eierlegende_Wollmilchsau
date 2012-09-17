@@ -1,9 +1,10 @@
 class Marten < RubyMovableAgent
   stm_attr_accessor :energy
+  Max_Energy = 3334
   
   def initialize(*args)
     super
-    self.energy = 100.0
+    self.energy = Max_Energy/2
   end
 
   def tick
@@ -18,6 +19,8 @@ class Marten < RubyMovableAgent
     # assumes 1.52712 encounters per step - equivalent to uncut forest encounter rate from Andruskiw et al 2008
     # probability of kill in uncut forest 0.05 (calculated from Andruskiw's values; 0.8 kills/24 encounters)
     # probability of kill in 1 step = 1.52712 * 0.05 = 0.076356
+    
+    return if self.energy > Max_Energy
     
     patch = current_patch
     vole_population = get_actor_property patch, 'vole_population'
@@ -35,7 +38,7 @@ class Marten < RubyMovableAgent
     #puts "Most desirable patch's desirability is #{desirability(most_desirable)}"
     turn_toward most_desirable
     forward 1
-    self.energy -= 2
+    self.energy -= 1
   end
   
   def desirability(a_patch)
@@ -63,7 +66,7 @@ class Marten < RubyMovableAgent
   end
 
   def have_babies_maybe
-    if rand > 0.98 and self.energy > 20
+    if rand > 0.98 
       offspring = spawn Marten
       self.energy = self.energy / 2
     end

@@ -32,7 +32,7 @@ class DeerMartenPatch < RubyPatch
   end
 
   def grow_vole_population
-    self.vole_population *= 1.01
+    self.vole_population *= 1.2 if self.vole_population < Max_vole_population
   end
 
   def smelly_stuff
