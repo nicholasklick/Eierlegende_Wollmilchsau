@@ -9,7 +9,7 @@ class Marten < RubyMovableAgent
 
   def tick
     eat_a_vole_if_you_can
-    go_to_that_place
+    go_to_a_better_place
     leave_your_paw_smells
     die_maybe
     have_babies_maybe
@@ -32,7 +32,7 @@ class Marten < RubyMovableAgent
     end
   end
 
-  def go_to_that_place
+  def go_to_a_better_place
     patches = get_patches_in_neighborhood(1).sort_by {|patch| desirability(patch)} 
     most_desirable = patches.reverse.first
     #puts "Most desirable patch's desirability is #{desirability(most_desirable)}"
@@ -44,12 +44,13 @@ class Marten < RubyMovableAgent
   def desirability(a_patch)
     treeness_accum = 0
     multiplier = 1
-    DeerMartenPatch::Tree_fields.each do |field|
-      #count bigger trees more than littler trees
-      treeness_accum += multiplier * get_actor_property(a_patch, field.to_s)
-      multiplier += 2
+    if get_actor_property(a_patch, "tree_type") == "coniferous"
+      DeerMartenPatch::Tree_fields.each do |field|
+        #count bigger trees more than littler trees
+        treeness_accum += multiplier * get_actor_property(a_patch, field.to_s)
+        multiplier += 2
+      end
     end
-    #todo: factor in others' smells here
     
     marten_whose_scent_is_here = get_actor_property a_patch, "marten"
     if marten_whose_scent_is_here and marten_whose_scent_is_here != self

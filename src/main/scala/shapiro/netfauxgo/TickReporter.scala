@@ -3,8 +3,8 @@ package shapiro.netfauxgo
 import concurrent.stm.TMap
 import akka.actor.ActorPath
 
-abstract class TickReporter {
-  def tickComplete(snapshot:TMap[ActorPath, ActorData]);
+trait TickReporter {
+  def tickComplete(snapshot:TMap[ActorPath, ActorData]):Unit;
 }
 
 class DefaultTickReporter extends TickReporter {

@@ -9,4 +9,5 @@ platforms :jruby do
   gem 'jruby-openssl'
   gem 'activerecord-jdbcmysql-adapter'
   gem 'jruby-scala-collections'
+  gem 'cheri'
 end

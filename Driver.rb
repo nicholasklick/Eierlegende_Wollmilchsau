@@ -1,12 +1,19 @@
 require 'database_magic'
 require 'java'
 require 'hacks'
+require 'cheri/swing'
+
 java_import 'akka.actor.ActorSystem'
 java_import 'shapiro.netfauxgo.AddAgent'
 java_import 'shapiro.netfauxgo.MovableAgent'
 java_import 'shapiro.netfauxgo.PatchSpawner'
 java_import 'shapiro.netfauxgo.Patch'
-java_import 'Driver'  
+java_import 'shapiro.netfauxgo.TickReporter'
+java_import 'shapiro.netfauxgo.RegisterTickReporter'
+java_import 'Driver' 
+
+java_import 'javax.swing.JPanel'
+
 
 # TODO
 # * landcover
@@ -32,6 +39,25 @@ class DefaultPatchSpawnerInRuby < PatchSpawner
   end
 end
 
+class GraphicalTickReporter 
+  include Cheri::Swing
+
+  def initialize(world)
+    @world = world
+    @width = world.width
+    @height = world.height
+    
+    @f = swing.frame("Egg Laying Pig") { label 'Tick Reporter ready!!!!!!!'}
+    
+    @f.pack
+    @f.visible = true
+  end
+  
+  def tickComplete(snapshot)
+    puts "There are #{snapshot.size} things in the current snapshot"
+  end
+end
+
 db_world_id = ARGV.first.to_i
 
 puts "Using World ID #{db_world_id}"
@@ -43,6 +69,8 @@ driver = Driver.new(db_world.width, db_world.height, patchSpawner)
 world = driver.world
 actor_system = driver.system
 
+reporter = GraphicalTickReporter.new(world)
+world.manager.tell RegisterTickReporter.new(reporter)
 
 puts "Spawning agents"
 200.times do
