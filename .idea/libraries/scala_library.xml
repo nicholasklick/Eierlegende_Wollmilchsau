@@ -1,19 +1,19 @@
 <component name="libraryTable">
   <library name="scala-library">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-library.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-swing.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/lib/scala-dbc.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/sbt-base/scala-library.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/jline.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scala-compiler.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scala-dbc.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scala-library.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scala-partest.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scala-swing.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scalacheck.jar!/" />
+      <root url="jar:///usr/local/Cellar/scala/2.9.2/libexec/lib/scalap.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="file://$PROJECT_DIR$/../libs/scala-2.9.2/doc/scala-devel-docs/api" />
-      <root url="file://$USER_HOME$/Dropboxes/RBS/reference/scala and akka/scala-docs-2.9.2" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/src/scala-library-src.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/src/scala-swing-src.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../libs/scala-2.9.2/src/scala-dbc-src.jar!/" />
+      <root url="file:///usr/local/Cellar/scala/2.9.2/libexec/src" />
     </SOURCES>
+    <jarDirectory url="file:///usr/local/Cellar/scala/2.9.2/libexec/src" recursive="false" type="SOURCES" />
   </library>
 </component>

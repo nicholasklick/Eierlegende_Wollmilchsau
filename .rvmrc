@@ -1,2 +1,2 @@
-export CLASSPATH=$CLASSPATH:`pwd`/target/EierlegendeWollmilchsau-assembly-0.01.jar
-rvm use jruby-1.6.7.2
+export CLASSPATH=$CLASSPATH:`pwd`/target/EierlegendeWollmilchsau-assembly-0.01.jar:
+rvm use jruby-1.7.0@eggpig --create
