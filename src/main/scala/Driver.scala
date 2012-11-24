@@ -22,7 +22,7 @@ class Driver(val width:Int, val height:Int, val patchSpawner:PatchSpawner) {
 }
 
 object VoleDriver {
-  val driver = new Driver(128, 128, new VolePatchSpawner())
+  val driver = new Driver(713, 1200, new VolePatchSpawner())
   //driver.world.manager ! RegisterTickReporter(new DefaultTickReporter())
 
   def main(args: Array[String]): Unit = {

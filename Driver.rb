@@ -1,3 +1,5 @@
+Dir["lib/\*.jar"].each { |jar| require jar }
+
 require 'database_magic'
 require 'java'
 require 'hacks'

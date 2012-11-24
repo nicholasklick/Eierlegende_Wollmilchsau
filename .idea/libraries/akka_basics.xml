@@ -1,11 +1,13 @@
 <component name="libraryTable">
   <library name="akka basics">
     <CLASSES>
-      <root url="jar:///usr/local/Cellar/akka/2.0.2/libexec/lib/akka/akka-actor-2.0.2.jar!/" />
-      <root url="jar:///usr/local/Cellar/akka/2.0.2/libexec/lib/akka/akka-transactor-2.0.2.jar!/" />
-      <root url="jar:///usr/local/Cellar/akka/2.0.2/libexec/lib/akka/scala-stm_2.9.1-0.5.jar!/" />
+      <root url="file:///usr/local/Cellar/akka/2.0.3/libexec/lib/akka" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file:///usr/local/Cellar/akka/2.0.3/libexec/lib/akka" />
+    </SOURCES>
+    <jarDirectory url="file:///usr/local/Cellar/akka/2.0.3/libexec/lib/akka" recursive="false" />
+    <jarDirectory url="file:///usr/local/Cellar/akka/2.0.3/libexec/lib/akka" recursive="false" type="SOURCES" />
   </library>
 </component>
