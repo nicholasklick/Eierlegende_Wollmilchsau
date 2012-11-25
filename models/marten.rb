@@ -4,7 +4,7 @@ class Marten < RubyMovableAgent
   stm_attr_accessor :energy
   Max_Energy = 3334
   
-  Class_codes_martens_can_dig = [41, 42, 43, 90] #conifers + mixed
+  Class_codes_martens_can_dig = [42, 43] #conifers + mixed
   
   def initialize(*args)
     super
@@ -35,24 +35,31 @@ class Marten < RubyMovableAgent
     p_kill = (vole_population / DeerMartenPatch::Max_vole_population) * 3.0
     
     if rand > (1 - p_kill)
-      self.energy += Max_Energy/2
+      self.energy += Max_Energy/3
       set_actor_property(patch, 'vole_population', vole_population - 1)
     end
   end
 
   def go_to_a_better_place
-    patches = get_patches_in_neighborhood(3).find_all do |patch|
+    patches = get_patches_in_neighborhood(1).find_all do |patch|
       none_or_my_scent =  [None, nil, agentID].include? get_actor_property(patch, "marten")
       none_or_my_scent && Class_codes_martens_can_dig.include?(get_actor_property(patch, "landcover_class_code"))
     end
     
-    if patches.count == 0
-    else    
+    if patches.count == 0 #no place good, flail.
+      patches = get_patches_in_neighborhood(1).find_all do |patch|
+        none_or_my_scent =  [None, nil, agentID].include? get_actor_property(patch, "marten")
+        none_or_my_scent && Class_codes_martens_can_dig.concat([90,41,90]).include?(get_actor_property(patch, "landcover_class_code"))
+      end
+    end
+    
+    if patches.count > 0
       filtered_patches = patches.sort_by {|patch| desirability(patch)} 
       most_desirable = filtered_patches.slice(0,2).shuffle.first # add some noise to the selection of the best patch
       #puts "Most desirable patch's desirability is #{desirability(most_desirable)}"
       #desirability(most_desirable, true)
       turn_toward most_desirable
+
       forward 1
       self.energy -= 10
     end
@@ -82,7 +89,7 @@ class Marten < RubyMovableAgent
     # end
     # 
     backtrack_penalty = 0
-    if marten_whose_scent_is_here and marten_whose_scent_is_here != None and marten_scent_age == 0 
+    if marten_whose_scent_is_here and marten_whose_scent_is_here != None and marten_scent_age < 2 
       backtrack_penalty = 500
     end
     
@@ -99,7 +106,7 @@ class Marten < RubyMovableAgent
   def have_babies_maybe
     if rand > 0.98 and self.energy > Max_Energy/2
       my_pos = position
-      offspring = spawn(Marten, (x + 2-rand(5)) % world.width, ((y + 2 - rand(5)) %world.height))
+      offspring = spawn(Marten, (x + 5-rand(10)) % world.width, ((y + 5 - rand(10)) %world.height))
       self.energy = self.energy / 2
     end
   end
