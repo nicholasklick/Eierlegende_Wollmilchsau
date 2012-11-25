@@ -3,7 +3,7 @@ Dir["lib/\*.jar"].each { |jar| require jar }
 require 'database_magic'
 require 'java'
 require 'hacks'
-require 'cheri/swing'
+require 'PNG_reporter'
 
 java_import 'akka.actor.ActorSystem'
 java_import 'shapiro.netfauxgo.AddAgent'
@@ -14,19 +14,7 @@ java_import 'shapiro.netfauxgo.TickReporter'
 java_import 'shapiro.netfauxgo.RegisterTickReporter'
 java_import 'Driver' 
 
-java_import 'javax.swing.JPanel'
-
-
-# TODO
-# * landcover
-# * import
-# * map render
-# * decide movement based on neighborhood patches
-# * reproduce
-# * die
-
-
-require 'models/marten_patch'
+require 'models/deer_marten_patch'
 require 'models/marten'
 
 
@@ -41,24 +29,7 @@ class DefaultPatchSpawnerInRuby < PatchSpawner
   end
 end
 
-class GraphicalTickReporter 
-  include Cheri::Swing
 
-  def initialize(world)
-    @world = world
-    @width = world.width
-    @height = world.height
-    
-    @f = swing.frame("Egg Laying Pig") { label 'Tick Reporter ready!!!!!!!'}
-    
-    @f.pack
-    @f.visible = true
-  end
-  
-  def tickComplete(snapshot)
-    puts "There are #{snapshot.size} things in the current snapshot"
-  end
-end
 
 db_world_id = ARGV.first.to_i
 
@@ -71,12 +42,15 @@ driver = Driver.new(db_world.width, db_world.height, patchSpawner)
 world = driver.world
 actor_system = driver.system
 
-reporter = GraphicalTickReporter.new(world)
+reporter = PNGReporter.new(world, db_world_id)
 world.manager.tell RegisterTickReporter.new(reporter)
 
 puts "Spawning agents"
-200.times do
-  new_actor = actor_system.actor_of(Props.create { Marten.new world })
+how_many_martens_to_spawn = ((10.0/(128*128)) * db_world.width * db_world.height).floor
+marten_tiles = db_world.resource_tiles.where(:landcover_class_code => Marten::Class_codes_martens_can_dig).order("RAND()").limit(how_many_martens_to_spawn)
+marten_tiles.each do |rt|
+  # puts "Spawning marten at #{rt.x}, #{rt.y}"
+  new_actor = actor_system.actor_of(Props.create { Marten.new world, rt.x, rt.y })
   world.manager.tell AddAgent.new new_actor
 end
 

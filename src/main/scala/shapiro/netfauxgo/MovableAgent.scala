@@ -2,10 +2,18 @@ package shapiro.netfauxgo
 
 import scala.concurrent.stm._
 import akka.actor.ActorRef
+import scala.math.atan2
+import scala.math.max
+import scala.math.min
 
 abstract class MovableAgent(world: World) extends Agent(world) {
 
   setProperty("heading", 360 * scala.math.random)
+
+  def this(world:World, x:Double, y:Double) = {
+	this(world)
+	data.setPosition(x, y)
+  }
 
   def forward(steps: Double) = {
     atomic {
@@ -23,7 +31,7 @@ abstract class MovableAgent(world: World) extends Agent(world) {
         while (newX < 0)
           newX += world.width
 
-        data.setPosition(newX, newY)
+        data.setPosition(min(max(newX, 0), world.width - 1), min(max(newY, 0), world.height - 1))
 
         val newPatch = currentPatch()
 
@@ -55,7 +63,7 @@ abstract class MovableAgent(world: World) extends Agent(world) {
   }
 
   def turn_toward(patch:ActorRef):Unit = {
-    turn_left(angle_toward(patch) )
+    data.setProperty("heading", angle_toward(patch))
   }
 
   def angle_toward(patch:ActorRef) = {
@@ -66,7 +74,9 @@ abstract class MovableAgent(world: World) extends Agent(world) {
     val my_x = my_position._1
     val my_y = my_position._2
 
-    heading - (patch_y - my_y) / (patch_x - my_x)
+	val delta_x = patch_x - my_x
+    val delta_y = patch_y - my_y
+    atan2(delta_y, delta_x).toDegrees % 360
   }
 
 

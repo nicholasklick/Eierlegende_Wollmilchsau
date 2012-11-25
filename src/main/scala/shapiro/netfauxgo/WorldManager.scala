@@ -35,7 +35,9 @@ class WorldManager(val world: World) extends Actor {
       agentCount = critters.size
       outstandingCritters = critters
       critters.foreach(agent => agent ! tick)
-    }
+    }else if (readyForNewTick && critters.size == 0) {
+	  println("Critters Are All Dead!")
+	}
   }
 
   def tellAgentToDie(target:ActorRef, message:KillAgent) = {

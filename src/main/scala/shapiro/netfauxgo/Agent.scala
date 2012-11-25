@@ -2,12 +2,14 @@ package shapiro.netfauxgo
 
 import akka.dispatch.{ExecutionContext, Future, Await}
 import scala.concurrent.stm._
+import scala.concurrent.Lock
 import akka.pattern.ask
 import akka.util.Timeout
 import akka.util.duration._
 import scala.collection.immutable.Map
 import akka.actor.{PoisonPill, ActorSystem, ActorRef, Actor}
 import java.util.NoSuchElementException
+import scala.math
 
 abstract class Agent(val world: World) extends Actor {
   val data = new ActorData(self, getClass.toString)
@@ -15,6 +17,8 @@ abstract class Agent(val world: World) extends Actor {
   world.registerActorData(self.path, data)
 
   implicit val timeout = Timeout(1 seconds) // needed for `?` below
+
+  final val agentID = Agent.getAgentID()
 
   notifyPatchThatWeHaveStarted(currentPatch())
 
@@ -73,7 +77,13 @@ abstract class Agent(val world: World) extends Actor {
   }
 
   def getActorProperty(otherActor:ActorRef, property:String) = {
-    world.getActorData(otherActor.path).getProperty(property)
+	try {
+	  world.getActorData(otherActor.path).getProperty(property)
+	} catch {
+		case _ => {
+			println("element " + property + " not found. here's what's there " + world.getActorData(otherActor.path).getAllPropertyNames())
+		}
+	}
   }
 
   def setActorProperty(otherActor:ActorRef, property:String, value:Any) = {
@@ -130,4 +140,14 @@ abstract class Agent(val world: World) extends Actor {
 
 }
 
-
+object Agent {
+  private  var IDcounter = 0
+  private  val counterLock = new Lock()
+  private def getAgentID() = {
+	counterLock.acquire
+	val ret = IDcounter 
+	IDcounter += 1
+	counterLock.release
+	ret
+  }
+}

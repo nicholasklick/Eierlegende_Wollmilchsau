@@ -9,6 +9,5 @@ trait TickReporter {
 
 class DefaultTickReporter extends TickReporter {
   def tickComplete(snapshot:TMap[ActorPath, ActorData]) = {
-    //nothing done yet
   }
 }

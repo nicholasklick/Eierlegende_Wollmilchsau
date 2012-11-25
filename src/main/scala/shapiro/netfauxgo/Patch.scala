@@ -73,7 +73,14 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
   }
 
   def getProperty(key:String): Any = {
-    data.getProperty(key)
+	try {
+		data.getProperty(key)
+	} catch {
+		case e: java.util.NoSuchElementException => {
+			println("element not found. here's what's there " + data.getAllPropertyNames())
+			throw e
+		}
+	}
   }
 
   def setProperty(key:String, value:Any) = {

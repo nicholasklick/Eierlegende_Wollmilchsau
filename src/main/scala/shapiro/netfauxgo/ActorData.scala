@@ -26,6 +26,10 @@ class ActorData(val actor: ActorRef, val klass:String) {
     setPosition(loc._1, loc._2)
   }
 
+  def getAllPropertyNames() = {
+	stuff.single.keys
+  }
+
   def getPosition() = atomic { implicit txn =>
     (x.get, y.get)
   }

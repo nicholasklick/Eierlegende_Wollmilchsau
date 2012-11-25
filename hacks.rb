@@ -30,6 +30,7 @@ module DataStorage
   module ClassMethods
     def stm_attr_accessor(*args)
       args.each do |arg|
+        # puts "\tCreating getting/setters for #{arg}"
         send :define_method, arg.to_s do
           get_property arg.to_s
         end
@@ -43,11 +44,11 @@ module DataStorage
 end
 
 module AgentSpawning
-  def spawn(klass)
-    new_actor = world.system.actor_of(Props.create { klass.new world })
+  def spawn(klass, x, y)
+    new_actor = world.system.actor_of(Props.create { klass.new world, x, y })
     world.manager.tell AddAgent.new new_actor
     new_actor
-  end
+  end  
 end
 
 
@@ -63,6 +64,16 @@ class RubyMovableAgent < MovableAgent
   def get_other_agents_in_vicinity(radius)
     super(radius).from_scala
   end
+  
+  def x
+    position._1
+  end
+  
+  def y
+    position._2
+  end
+
+  
 end
 
 class RubyPatch < Patch
