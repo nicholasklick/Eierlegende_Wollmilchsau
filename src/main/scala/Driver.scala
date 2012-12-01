@@ -15,14 +15,14 @@ class Driver(val width:Int, val height:Int, val patchSpawner:PatchSpawner) {
   println("...done")
 
   def startTicking():Unit = {
-    system.scheduler.schedule(50 milliseconds, 100 milliseconds, world.manager, Tick)
+    system.scheduler.schedule(50 milliseconds, 50 milliseconds, world.manager, Tick)
     println("Ticking!")
   }
 
 }
 
 object VoleDriver {
-  val driver = new Driver(713, 1200, new VolePatchSpawner())
+  val driver = new Driver(200, 200, new VolePatchSpawner())
   //driver.world.manager ! RegisterTickReporter(new DefaultTickReporter())
 
   def main(args: Array[String]): Unit = {

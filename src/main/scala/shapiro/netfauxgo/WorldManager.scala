@@ -106,6 +106,7 @@ class WorldManager(val world: World) extends Actor {
       val snapshot = world.getActorDataSnapshot()
       tickReporters.foreach( (reporter) => reporter.tickComplete(snapshot))
     }
+    world.bubbler ! TickComplete
     readyForNewTick = true
   }
 }

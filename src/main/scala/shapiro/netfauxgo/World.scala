@@ -8,6 +8,7 @@ import scala.math.{max, min}
 
 class World(val width: Int, val height: Int, val patchSpawner:PatchSpawner) {
   val system = ActorSystem("MySystem")
+  val bubbler = system.actorOf(Props(new Bubbler(this)))
   private val actorData = TMap.empty[ActorPath, ActorData]
 
   private val grid = Array.tabulate(width, height) {

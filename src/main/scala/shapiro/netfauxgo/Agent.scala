@@ -28,6 +28,7 @@ abstract class Agent(val world: World) extends Actor {
         if (!data.isDead()){
           tick()
           world.manager ! TickComplete(self)
+          world.bubbler ! DrawAgent(data.clone())
         }
     }
   }

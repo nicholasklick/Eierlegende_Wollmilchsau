@@ -66,6 +66,7 @@ class Patch(val world: World, val x: Int, val y: Int) extends Transactor {
         }
     }
     world.manager ! PatchTickComplete
+    world.bubbler ! DrawPatch(data.clone())
   }
 
   def tick() = {

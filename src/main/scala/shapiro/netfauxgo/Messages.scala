@@ -27,3 +27,6 @@ case object Die
 case object PatchTickComplete
 
 case class RegisterTickReporter(val tickReporter:TickReporter)
+
+case class DrawPatch(val data:ActorData)
+case class DrawAgent(val data:ActorData)

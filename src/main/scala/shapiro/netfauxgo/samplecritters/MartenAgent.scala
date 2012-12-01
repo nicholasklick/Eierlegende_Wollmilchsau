@@ -23,7 +23,7 @@ class MartenAgent(world: World) extends MovableAgent(world) {
 
   def goToABetterPlace = {
 	//FIXME: right now, it's just a random place
-    turn_right(-10 + 20 * scala.math.random)
+    turn_right(-90 + 180 * scala.math.random)
     forward(1)
   }
 

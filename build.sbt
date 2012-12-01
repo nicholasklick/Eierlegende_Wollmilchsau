@@ -17,8 +17,11 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies ++= Seq(
 	//"org.scala-tools" %% "scala-stm" % "0.6", 
-	"com.typesafe.akka" % "akka-actor" % "2.0.3",
-	"com.typesafe.akka" % "akka-transactor" % "2.0.3"
+	"com.typesafe.akka" % "akka-actor" % "2.0.4",
+	"com.typesafe.akka" % "akka-transactor" % "2.0.4",
+	"org.scala-lang"    % "scala-swing" % "2.9.2"
 )
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
+
+//mainClass in (Compile, run) := Some("shapiro.netfauxgo.Bubbler")
